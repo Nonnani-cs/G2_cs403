@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>จัดพิมพ์รายงาน - Chemotherapy Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
         .active-link { background-color: #dbeafe; color: #2563eb; border-radius: 0.5rem; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden bg-[#f3f4f6]">
+<body class="flex h-screen overflow-hidden text-gray-800">
 
     <!-- Sidebar -->
     <aside class="w-64 bg-white border-r flex flex-col shrink-0 z-20 shadow-sm">
@@ -29,6 +31,9 @@
             <a href="receive.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
                 <span class="mr-3 text-xl">📋</span><span>เบิก-รับยา</span>
             </a>
+            <a href="status.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                <span class="mr-3 text-xl">🔍</span><span>ตรวจสอบสถานะยา</span>
+            </a>
             <a href="patients.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
                 <span class="mr-3 text-xl">👥</span><span>จัดการรายชื่อผู้ป่วย</span>
             </a>
@@ -43,95 +48,342 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-hidden bg-[#f8fdf4] p-8">
+    <main class="flex-1 flex flex-col overflow-hidden bg-white">
         
-        <!-- Page Header -->
-        <div class="mb-6 flex items-center text-2xl font-bold text-gray-700">
-            <span>จัดพิมพ์รายงาน</span>
-            <span class="mx-3 text-gray-400 font-normal">›</span>
-            <span class="text-gray-900">สรุปสต็อกยา</span>
+        <!-- Navigation Header -->
+        <header class="bg-white border-b px-8 py-4 flex justify-center space-x-8 text-lg shrink-0">
+            <a href="manage.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จัดการข้อมูลยา</a>
+            <a href="receive.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">เบิก-รับยา</a>
+            <a href="dispense.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จัดการใบสั่งยา</a>
+            <a href="prescription.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จ่ายยา</a>
+        </header>
+
+        <!-- Top Tabs (WorldMedic style) -->
+        <div class="flex border-b-2 border-green-500 bg-green-100 p-2 pb-0">
+            <button class="flex-1 py-2 bg-green-500 font-bold text-white text-sm shadow-sm rounded-t-lg border-green-600 border">
+                จัดพิมพ์รายงาน
+            </button>
         </div>
 
-        <!-- White Container -->
-        <div class="bg-white rounded-2xl shadow-sm border border-green-100 p-6 flex-1 flex flex-col min-h-0 relative">
+        <div class="flex-1 p-2 flex flex-col gap-2 overflow-hidden bg-[#fffff0] border-4 border-[#e0ebd0]">
+            <!-- Content Wrapper (Reusing parts of old layout but inside new container) -->
+            <div class="flex-1 overflow-y-auto p-4 bg-[#f8fdf4] rounded-xl border border-green-300">
+                <!-- Page Header -->
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">รายงาน</h2>
+                    <p class="text-gray-500 text-sm mt-1">แสดงผลและจัดพิมพ์รายงานการดำเนินงาน</p>
+                </div>
+
+        <!-- 3 Cards -->
+        <div class="grid grid-cols-3 gap-6 mb-6">
+            <!-- Card 1 -->
+            <div id="card-receive" onclick="switchTab('receive')" class="report-card border-2 border-green-100 bg-white rounded-xl shadow-sm p-5 flex items-start space-x-4 cursor-pointer hover:shadow-md transition">
+                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-2xl shrink-0">📄</div>
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg leading-tight">รายงานการรับยาเข้า</h3>
+                    <p class="text-gray-500 text-sm mt-1 leading-snug">ข้อมูลการเบิกและรับยาเข้าคลัง</p>
+                </div>
+            </div>
             
-            <!-- Tabs -->
-            <div class="flex space-x-2 border-b border-gray-200 mb-6">
-                <button class="px-6 py-2.5 text-sm font-medium text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-t-lg transition-colors">การรับยาเข้า</button>
-                <button class="px-6 py-2.5 text-sm font-medium text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-t-lg transition-colors">การจ่ายยาออก</button>
-                <button class="px-6 py-2.5 text-sm font-bold text-green-700 bg-green-50 border-b-2 border-green-500 rounded-t-lg">สรุปสต็อกยา</button>
-            </div>
-
-            <!-- Filters -->
-            <div class="flex justify-between items-end mb-6">
-                <div class="flex space-x-6">
-                    <div class="flex flex-col">
-                        <label class="text-sm text-gray-600 font-medium mb-1">วันที่</label>
-                        <input type="date" class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-48 shadow-sm">
-                    </div>
-                    <div class="flex flex-col">
-                        <label class="text-sm text-gray-600 font-medium mb-1">สถานะยาทั้งหมด</label>
-                        <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-48 shadow-sm appearance-none bg-white">
-                            <option>ทั้งหมด</option>
-                            <option>ปกติ</option>
-                            <option>ใกล้หมดอายุ</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex space-x-3">
-                    <button class="flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-gray-200 outline-none">
-                        <span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg></span>
-                        <span>กรองข้อมูล</span>
-                    </button>
-                    <button class="flex items-center space-x-2 bg-black text-white px-5 py-2 rounded-lg text-sm font-medium shadow-md hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-gray-400 outline-none">
-                        <span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></span>
-                        <span>ดาวน์โหลด</span>
-                    </button>
+            <!-- Card 2 -->
+            <div id="card-dispense" onclick="switchTab('dispense')" class="report-card border border-gray-200 bg-white rounded-xl shadow-sm p-5 flex items-start space-x-4 cursor-pointer hover:shadow-md transition opacity-80 hover:opacity-100">
+                <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-lg flex items-center justify-center text-2xl shrink-0">📄</div>
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg leading-tight">รายงานการจ่ายยาออก</h3>
+                    <p class="text-gray-500 text-sm mt-1 leading-snug">ข้อมูลการจ่ายยาตามใบสั่ง</p>
                 </div>
             </div>
+            
+            <!-- Card 3 -->
+            <div id="card-stock" onclick="switchTab('stock')" class="report-card border border-gray-200 bg-white rounded-xl shadow-sm p-5 flex items-start space-x-4 cursor-pointer hover:shadow-md transition opacity-80 hover:opacity-100">
+                <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-lg flex items-center justify-center text-2xl shrink-0">📄</div>
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg leading-tight">รายงานสรุปสต็อกยา</h3>
+                    <p class="text-gray-500 text-sm mt-1 leading-snug">ยอดคงเหลือของยาในคลัง</p>
+                </div>
+            </div>
+        </div>
 
-            <!-- Table -->
-            <div class="flex-1 overflow-auto border border-gray-200 rounded-lg">
-                <table class="w-full text-sm text-center border-collapse">
-                    <thead class="bg-gray-100 sticky top-0 shadow-sm z-10">
-                        <tr>
-                            <th class="border-b border-gray-300 px-4 py-3 font-bold text-gray-700">ชื่อยา</th>
-                            <th class="border-b border-gray-300 px-4 py-3 font-bold text-gray-700 border-l border-gray-200">ชื่อทางการค้า</th>
-                            <th class="border-b border-gray-300 px-4 py-3 font-bold text-gray-700 border-l border-gray-200">Lot Number</th>
-                            <th class="border-b border-gray-300 px-4 py-3 font-bold text-gray-700 border-l border-gray-200">วันหมดอายุ</th>
-                            <th class="border-b border-gray-300 px-4 py-3 font-bold text-gray-700 border-l border-gray-200">จำนวนคงเหลือ</th>
-                            <th class="border-b border-gray-300 px-4 py-3 font-bold text-gray-700 border-l border-gray-200">สถานะ</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-800">
-                        <tr class="hover:bg-green-50 transition-colors border-b border-gray-200">
-                            <td class="px-4 py-3">Cyclophosphamide 500mg</td>
-                            <td class="px-4 py-3 border-l border-gray-200">Endoxan</td>
-                            <td class="px-4 py-3 border-l border-gray-200">LOT2024001</td>
-                            <td class="px-4 py-3 border-l border-gray-200">2026-12-31</td>
-                            <td class="px-4 py-3 border-l border-gray-200">25 vial</td>
-                            <td class="px-4 py-3 border-l border-gray-200 text-green-500 font-bold">ปกติ</td>
-                        </tr>
-                        <!-- Empty rows for design -->
-                        <tr class="border-b border-gray-200"><td class="px-4 py-6"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td></tr>
-                        <tr class="border-b border-gray-200"><td class="px-4 py-6"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td></tr>
-                        <tr class="border-b border-gray-200"><td class="px-4 py-6"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td></tr>
-                        <tr class="border-b border-gray-200"><td class="px-4 py-6"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td></tr>
-                        <tr class="border-b border-gray-200"><td class="px-4 py-6"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td></tr>
-                        <tr><td class="px-4 py-6"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td><td class="px-4 py-6 border-l border-gray-200"></td></tr>
-                    </tbody>
-                </table>
+        <!-- White Container for Content -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex-1 flex flex-col min-h-0">
+            
+            <!-- Pill Tabs -->
+            <div class="flex space-x-2 bg-gray-100 p-1 rounded-full w-max mb-6">
+                <button id="pill-receive" onclick="switchTab('receive')" class="pill-tab px-6 py-1.5 text-sm font-bold text-gray-900 bg-white rounded-full shadow-sm">การรับยาเข้า</button>
+                <button id="pill-dispense" onclick="switchTab('dispense')" class="pill-tab px-6 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors rounded-full">การจ่ายยาออก</button>
+                <button id="pill-stock" onclick="switchTab('stock')" class="pill-tab px-6 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors rounded-full">สรุปสต็อกยา</button>
             </div>
 
+            <!-- CONTENT 1: Receive (รับยาเข้า) -->
+            <div id="content-receive" class="report-content flex-1 flex flex-col min-h-0">
+                <!-- Filters -->
+                <div class="flex justify-between items-end mb-6">
+                    <div class="flex space-x-4">
+                        <div class="flex flex-col">
+                            <label class="text-sm font-bold text-gray-900 mb-1.5">ช่วงเวลา</label>
+                            <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-40 bg-gray-50 appearance-none shadow-sm">
+                                <option>รายเดือน</option>
+                                <option>รายวัน</option>
+                                <option>รายปี</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-sm font-bold text-gray-900 mb-1.5">จากวันที่</label>
+                            <input type="date" class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-500 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-48 bg-gray-50 shadow-sm" value="2026-02-01">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-sm font-bold text-gray-900 mb-1.5">ถึงวันที่</label>
+                            <input type="date" class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-500 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-48 bg-gray-50 shadow-sm" value="2026-02-28">
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="flex items-center space-x-2 bg-white border border-gray-300 text-gray-800 px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
+                            <span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg></span>
+                            <span>กรองข้อมูล</span>
+                        </button>
+                        <button class="flex items-center space-x-2 bg-[#0f172a] text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-800 transition-colors">
+                            <span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></span>
+                            <span>ดาวน์โหลด</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Table -->
+                <div class="flex-1 overflow-auto border-t border-gray-200">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="sticky top-0 bg-white shadow-sm border-b border-gray-200 z-10">
+                            <tr>
+                                <th class="px-4 py-4 font-bold text-gray-900">วันที่-เวลา</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">เลขที่เบิก</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">ชื่อยา</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">ชื่อทางการค้า</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">Lot Number</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">จำนวนที่รับ</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">ผู้รับยา</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-800 bg-white">
+                            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                                <td class="px-4 py-4">2026-02-07 10:30</td>
+                                <td class="px-4 py-4 font-medium">REQ-2026-001</td>
+                                <td class="px-4 py-4 font-medium">Cyclophosphamide 500mg</td>
+                                <td class="px-4 py-4 text-gray-500">Endoxan</td>
+                                <td class="px-4 py-4">LOT2024001</td>
+                                <td class="px-4 py-4">10 ขวด</td>
+                                <td class="px-4 py-4">ภก.สมชาย ใจดี</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                                <td class="px-4 py-4">2026-02-05 14:15</td>
+                                <td class="px-4 py-4 font-medium">REQ-2026-002</td>
+                                <td class="px-4 py-4 font-medium">Doxorubicin 50mg</td>
+                                <td class="px-4 py-4 text-gray-500">Adriamycin</td>
+                                <td class="px-4 py-4">LOT2024003</td>
+                                <td class="px-4 py-4">5 ขวด</td>
+                                <td class="px-4 py-4">ภก.สมหญิง แสงดี</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Footer summary -->
+                <div class="mt-4 flex justify-between items-center text-sm bg-gray-50 p-3 rounded-lg border border-gray-100 shrink-0">
+                    <div class="text-gray-600">แสดง 2 รายการ</div>
+                    <div class="font-bold text-gray-900">รวมทั้งหมด: 15 หน่วย</div>
+                </div>
+            </div>
+
+            <!-- CONTENT 2: Dispense (จ่ายยาออก) -->
+            <div id="content-dispense" class="report-content hidden flex-1 flex flex-col min-h-0">
+                <!-- Filters -->
+                <div class="flex justify-between items-end mb-6">
+                    <div class="flex space-x-4">
+                        <div class="flex flex-col">
+                            <label class="text-sm font-bold text-gray-900 mb-1.5">ช่วงเวลา</label>
+                            <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-40 bg-gray-50 appearance-none shadow-sm">
+                                <option>รายเดือน</option>
+                                <option>รายวัน</option>
+                                <option>รายปี</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-sm font-bold text-gray-900 mb-1.5">จากวันที่</label>
+                            <input type="date" class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-500 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-48 bg-gray-50 shadow-sm" value="2026-02-01">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-sm font-bold text-gray-900 mb-1.5">ถึงวันที่</label>
+                            <input type="date" class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-500 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-48 bg-gray-50 shadow-sm" value="2026-02-28">
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="flex items-center space-x-2 bg-white border border-gray-300 text-gray-800 px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
+                            <span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg></span>
+                            <span>กรองข้อมูล</span>
+                        </button>
+                        <button class="flex items-center space-x-2 bg-[#0f172a] text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-800 transition-colors">
+                            <span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></span>
+                            <span>ดาวน์โหลด</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Table -->
+                <div class="flex-1 overflow-auto border-t border-gray-200">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="sticky top-0 bg-white shadow-sm border-b border-gray-200 z-10">
+                            <tr>
+                                <th class="px-4 py-4 font-bold text-gray-900">วันที่-เวลา</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">เลขที่ใบสั่งยา</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">HN</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">ชื่อยา</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">ชื่อทางการค้า</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">Lot Number</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">จำนวนที่จ่าย</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">ผู้จ่ายยา</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-800 bg-white">
+                            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                                <td class="px-4 py-4">2026-02-07 11:00</td>
+                                <td class="px-4 py-4 font-medium">RX-2026-001</td>
+                                <td class="px-4 py-4">HN123456</td>
+                                <td class="px-4 py-4 font-medium">Cyclophosphamide 500mg</td>
+                                <td class="px-4 py-4 text-gray-500">Endoxan</td>
+                                <td class="px-4 py-4">LOT2024001</td>
+                                <td class="px-4 py-4">1 ขวด</td>
+                                <td class="px-4 py-4">ภก.สมชาย ใจดี</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                                <td class="px-4 py-4">2026-02-06 15:30</td>
+                                <td class="px-4 py-4 font-medium">RX-2026-002</td>
+                                <td class="px-4 py-4">HN123457</td>
+                                <td class="px-4 py-4 font-medium">5-Fluorouracil 500mg</td>
+                                <td class="px-4 py-4 text-gray-500">Adrucil</td>
+                                <td class="px-4 py-4">LOT2024004</td>
+                                <td class="px-4 py-4">2 ขวด</td>
+                                <td class="px-4 py-4">ภก.สมหญิง แสงดี</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Footer summary -->
+                <div class="mt-4 flex justify-between items-center text-sm bg-gray-50 p-3 rounded-lg border border-gray-100 shrink-0">
+                    <div class="text-gray-600">แสดง 2 รายการ</div>
+                    <div class="font-bold text-gray-900">รวมทั้งหมด: 3 หน่วย</div>
+                </div>
+            </div>
+
+            <!-- CONTENT 3: Stock (สรุปสต็อกยา) -->
+            <div id="content-stock" class="report-content hidden flex-1 flex flex-col min-h-0">
+                <!-- Filters -->
+                <div class="flex justify-between items-end mb-6">
+                    <div class="flex space-x-4">
+                        <div class="flex flex-col">
+                            <label class="text-sm font-bold text-gray-900 mb-1.5">ณ วันที่</label>
+                            <input type="date" class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-500 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-48 bg-gray-50 shadow-sm" value="2026-04-20">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-sm font-bold text-gray-900 mb-1.5">สถานะยา</label>
+                            <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 w-48 bg-gray-50 appearance-none shadow-sm">
+                                <option>ทั้งหมด</option>
+                                <option>ปกติ</option>
+                                <option>ใกล้หมดอายุ</option>
+                                <option>สต็อกน้อย</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="flex items-center space-x-2 bg-white border border-gray-300 text-gray-800 px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
+                            <span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg></span>
+                            <span>กรองข้อมูล</span>
+                        </button>
+                        <button class="flex items-center space-x-2 bg-[#0f172a] text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-800 transition-colors">
+                            <span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></span>
+                            <span>ดาวน์โหลด</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Table -->
+                <div class="flex-1 overflow-auto border-t border-gray-200">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="sticky top-0 bg-white shadow-sm border-b border-gray-200 z-10">
+                            <tr>
+                                <th class="px-4 py-4 font-bold text-gray-900">ชื่อยา</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">ชื่อทางการค้า</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">Lot Number</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">วันหมดอายุ</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">จำนวนคงเหลือ</th>
+                                <th class="px-4 py-4 font-bold text-gray-900">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-800 bg-white">
+                            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                                <td class="px-4 py-4 font-medium">Cyclophosphamide 500mg</td>
+                                <td class="px-4 py-4 text-gray-500">Endoxan</td>
+                                <td class="px-4 py-4">LOT2024001</td>
+                                <td class="px-4 py-4">2026-12-31</td>
+                                <td class="px-4 py-4">25 ขวด</td>
+                                <td class="px-4 py-4 font-bold text-green-500">ปกติ</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                                <td class="px-4 py-4 font-medium">Cyclophosphamide 500mg</td>
+                                <td class="px-4 py-4 text-gray-500">Endoxan</td>
+                                <td class="px-4 py-4">LOT2024002</td>
+                                <td class="px-4 py-4">2026-03-15</td>
+                                <td class="px-4 py-4">20 ขวด</td>
+                                <td class="px-4 py-4 font-bold text-orange-400">ใกล้หมดอายุ</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                                <td class="px-4 py-4 font-medium">Doxorubicin 50mg</td>
+                                <td class="px-4 py-4 text-gray-500">Adriamycin</td>
+                                <td class="px-4 py-4">LOT2024003</td>
+                                <td class="px-4 py-4">2026-08-20</td>
+                                <td class="px-4 py-4">30 ขวด</td>
+                                <td class="px-4 py-4 font-bold text-green-500">ปกติ</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                                <td class="px-4 py-4 font-medium">5-Fluorouracil 500mg</td>
+                                <td class="px-4 py-4 text-gray-500">Adrucil</td>
+                                <td class="px-4 py-4">LOT2024004</td>
+                                <td class="px-4 py-4">2026-10-10</td>
+                                <td class="px-4 py-4">40 ขวด</td>
+                                <td class="px-4 py-4 font-bold text-green-500">ปกติ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
+    </div>
+</div>
+</main>
 
-        <!-- Footer Buttons -->
-        <div class="mt-8 flex justify-between">
-            <button class="bg-[#808080] hover:bg-gray-600 text-white px-12 py-2.5 rounded-full font-medium shadow-md transition-colors text-sm border border-gray-500">กลับ</button>
-            <button class="bg-[#808080] hover:bg-gray-600 text-white px-12 py-2.5 rounded-full font-medium shadow-md transition-colors text-sm border border-gray-500">ถัดไป</button>
-        </div>
+    <script>
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.report-content').forEach(el => el.classList.add('hidden'));
+            
+            // Reset cards
+            document.querySelectorAll('.report-card').forEach(el => {
+                el.classList.remove('border-2', 'border-green-100');
+                el.classList.add('border', 'border-gray-200', 'opacity-80');
+            });
 
-    </main>
+            // Reset pill tabs
+            document.querySelectorAll('.pill-tab').forEach(el => {
+                el.classList.remove('font-bold', 'text-gray-900', 'bg-white', 'shadow-sm');
+                el.classList.add('font-medium', 'text-gray-600');
+            });
 
+            // Show selected content
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+
+            // Activate corresponding card
+            const card = document.getElementById('card-' + tabId);
+            card.classList.remove('border', 'border-gray-200', 'opacity-80');
+            card.classList.add('border-2', 'border-green-100');
+
+            // Activate corresponding pill tab
+            const pill = document.getElementById('pill-' + tabId);
+            pill.classList.remove('font-medium', 'text-gray-600');
+            pill.classList.add('font-bold', 'text-gray-900', 'bg-white', 'shadow-sm');
+        }
+    </script>
 </body>
 </html>
