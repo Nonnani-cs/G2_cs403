@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการรายชื่อผู้ป่วย - Chemotherapy Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f3f4f6; }
+        .active-link { background-color: #dbeafe; color: #2563eb; border-radius: 0.5rem; }
+        /* สไตล์ตารางให้เต็มความสูง */
+        tbody tr:last-child td { border-bottom: 0; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r flex flex-col shrink-0">
+        <div class="p-6">
+            <h1 class="text-blue-900 font-bold text-lg leading-tight">ระบบจัดการยาเคมีบำบัด</h1>
+            <p class="text-gray-400 text-xs">Chemotherapy Management</p>
+        </div>
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="index.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                <span class="mr-3 text-xl">🏠</span><span>หน้าหลัก</span>
+            </a>
+            <a href="manage.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                <span class="mr-3 text-xl">📄</span><span>การจัดการข้อมูลยา</span>
+            </a>
+            <a href="receive.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                <span class="mr-3 text-xl">📋</span><span>เบิก-รับยา</span>
+            </a>
+            <div class="flex items-center p-3 active-link">
+                <span class="mr-3 text-xl">👥</span><span class="font-medium">จัดการรายชื่อผู้ป่วย</span>
+            </div>
+        </nav>
+        <div class="p-4 border-t flex items-center bg-gray-50 mt-auto">
+            <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+            <div><p class="text-sm font-medium text-gray-700">เภสัชกร สมมุติ</p><p class="text-xs text-gray-500">Admin</p></div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#f8fdf4]">
+        
+        <!-- Toolbar -->
+        <div class="bg-white border-b border-green-200 px-6 py-3 flex items-center justify-between shadow-sm shrink-0">
+            <div class="flex items-center space-x-6">
+                <!-- Action Icons -->
+                <div class="flex space-x-3">
+                    <button class="text-gray-600 hover:text-green-600 transition-colors flex items-center justify-center p-2 rounded-md hover:bg-green-50 border border-transparent hover:border-green-200" title="เพิ่มผู้ป่วยใหม่">
+                        <span class="text-3xl relative">
+                            👤<span class="absolute -right-1 -bottom-1 text-base text-green-500 font-bold bg-white rounded-full leading-none">+</span>
+                        </span>
+                    </button>
+                    <button class="text-gray-600 hover:text-blue-600 transition-colors flex items-center justify-center p-2 rounded-md hover:bg-blue-50 border border-transparent hover:border-blue-200" title="แก้ไขข้อมูลผู้ป่วย">
+                        <span class="text-3xl relative">
+                            👤<span class="absolute -right-1 -bottom-1 text-sm bg-white rounded-full">✏️</span>
+                        </span>
+                    </button>
+                </div>
+                
+                <!-- Search Section -->
+                <div class="flex items-center space-x-4 bg-green-50 px-4 py-2 rounded-lg border border-green-200 shadow-inner">
+                    <div class="flex items-center space-x-3 text-sm">
+                        <label class="text-green-800 font-bold">ค้นหา</label>
+                        <input type="text" class="border border-green-300 rounded px-3 py-1.5 w-64 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 text-gray-700 bg-white shadow-sm transition-all" placeholder="กรอกคำค้นหา...">
+                    </div>
+                    <div class="flex items-center space-x-3 text-sm border-l border-green-200 pl-4">
+                        <label class="text-green-800 font-bold">ใน :</label>
+                        <select class="border border-green-300 rounded px-2 py-1.5 w-32 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 text-gray-700 bg-white shadow-sm transition-all">
+                            <option>ชื่อ-สกุล</option>
+                            <option>HN</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Buttons -->
+            <div class="flex flex-col space-y-1.5 ml-4">
+                <button class="bg-[#e2f5e2] border border-[#a2d9a2] text-green-800 px-6 py-1 text-xs font-bold rounded shadow hover:bg-[#c9ebc9] transition-colors focus:ring-2 focus:ring-green-300 outline-none">เริ่มค้นหา</button>
+                <button class="bg-[#e2f5e2] border border-[#a2d9a2] text-green-800 px-6 py-1 text-xs font-bold rounded shadow hover:bg-[#c9ebc9] transition-colors focus:ring-2 focus:ring-green-300 outline-none">ค้นหาต่อไป</button>
+            </div>
+        </div>
+
+        <!-- Table Content -->
+        <div class="flex-1 overflow-auto p-5 flex flex-col">
+            <div class="bg-white border border-green-300 shadow-md rounded-lg overflow-hidden flex-1 flex flex-col">
+                <table class="w-full text-sm text-left border-collapse min-w-max flex-1">
+                    <thead class="sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th colspan="6" class="border border-green-300 px-4 py-2.5 text-center text-green-900 font-bold bg-[#d1f2c9] text-base">ทั่วไป</th>
+                            <th colspan="2" class="border border-green-300 px-4 py-2.5 text-center text-green-900 font-bold bg-[#c4ecc4] text-base">ส่วนตัว</th>
+                        </tr>
+                        <tr class="bg-[#e8f8e3]">
+                            <th class="border border-green-300 px-3 py-2.5 text-center font-bold text-gray-700 w-16">ลำดับ</th>
+                            <th class="border border-green-300 px-4 py-2.5 text-center font-bold text-gray-700 w-32">HN</th>
+                            <th class="border border-green-300 px-3 py-2.5 text-center font-bold text-gray-700 w-24">คำนำหน้า</th>
+                            <th class="border border-green-300 px-4 py-2.5 text-center font-bold text-gray-700 min-w-[200px]">ชื่อ-สกุล</th>
+                            <th class="border border-green-300 px-3 py-2.5 text-center font-bold text-gray-700 w-20">เพศ</th>
+                            <th class="border border-green-300 px-3 py-2.5 text-center font-bold text-gray-700 w-20">อายุ</th>
+                            <th class="border border-green-300 px-4 py-2.5 text-center font-bold text-gray-700 w-32">วันเกิด</th>
+                            <th class="border border-green-300 px-4 py-2.5 text-center font-bold text-gray-700 w-24">สัญชาติ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-800 bg-white">
+                        <tr class="hover:bg-green-50 transition-colors cursor-pointer group">
+                            <td class="border border-gray-200 px-3 py-2 text-center group-hover:bg-green-100">1</td>
+                            <td class="border border-gray-200 px-4 py-2 text-center group-hover:bg-green-100">66001234</td>
+                            <td class="border border-gray-200 px-3 py-2 text-center group-hover:bg-green-100">นาย</td>
+                            <td class="border border-gray-200 px-4 py-2 font-medium text-blue-700 group-hover:bg-green-100">สมชาย ใจดี</td>
+                            <td class="border border-gray-200 px-3 py-2 text-center group-hover:bg-green-100">ชาย</td>
+                            <td class="border border-gray-200 px-3 py-2 text-center group-hover:bg-green-100">39</td>
+                            <td class="border border-gray-200 px-4 py-2 text-center group-hover:bg-green-100">25/07/2530</td>
+                            <td class="border border-gray-200 px-4 py-2 text-center group-hover:bg-green-100">ไทย</td>
+                        </tr>
+                        <!-- Empty rows for design padding -->
+                        <tr class="hover:bg-gray-50 transition-colors"><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors"><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors"><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors"><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors"><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors"><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors"><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-3 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td><td class="border border-gray-200 px-4 py-5 text-center"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

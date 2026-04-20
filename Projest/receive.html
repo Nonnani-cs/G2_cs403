@@ -35,94 +35,216 @@
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white border-b px-8 py-4 flex justify-center space-x-8 text-lg">
-            <a href="manage.html" class="text-gray-400 hover:text-gray-600 transition">จัดการข้อมูลยา</a>
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#f0f9e8]">
+        <header class="bg-white border-b px-8 py-4 flex justify-center space-x-8 text-lg shrink-0">
+            <a href="manage.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จัดการข้อมูลยา</a>
             <button class="text-blue-900 font-bold border-b-2 border-blue-900 pb-1">เบิก-รับยา</button>
-            <button class="text-gray-400 hover:text-gray-600 transition">จัดการใบสั่งยา</button>
-            <button class="text-gray-400 hover:text-gray-600 transition">จ่ายยา</button>
+            <a href="dispense.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จัดการใบสั่งยา</a>
+            <a href="prescription.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จ่ายยา</a>
         </header>
 
-        <div class="flex-1 p-6 flex flex-col gap-4 overflow-hidden">
-            
-            <div class="bg-white border border-gray-300 rounded-2xl p-6 shadow-sm">
-                <div class="grid grid-cols-12 gap-4 items-center">
-                    <div class="col-span-1 text-right text-sm">เภสัชกร</div>
-                    <div class="col-span-3"><input type="text" value="เภสัชกร สมมุติ" class="w-full border rounded-md p-1.5 bg-gray-50 outline-none px-3" readonly></div>
-                    
-                    <div class="col-span-2 text-center text-sm">
-                        <button class="bg-gray-100 border border-gray-400 px-4 py-1 rounded text-xs hover:bg-gray-200">ดูรายการที่เคยเบิก</button>
-                    </div>
+        <!-- Top Tabs (WorldMedic style) -->
+        <div class="flex border-b-2 border-green-500 bg-green-100 p-2 pb-0 space-x-1">
+            <button class="flex-1 py-2 bg-green-500 font-bold text-white text-sm shadow-sm rounded-t-lg border-green-600 border">
+                สั่งซื้อสินค้า
+            </button>
+            <button class="flex-1 py-2 hover:bg-green-200 text-green-800 text-sm transition-colors rounded-t-lg border-green-300 border border-b-0 bg-[#e0f7da]">
+                รับสินค้า
+            </button>
+            <button class="flex-1 py-2 hover:bg-green-200 text-green-800 text-sm transition-colors rounded-t-lg border-green-300 border border-b-0 bg-[#e0f7da]">
+                ส่งคืนสินค้า
+            </button>
+            <button class="flex-1 py-2 hover:bg-green-200 text-green-800 text-sm transition-colors rounded-t-lg border-green-300 border border-b-0 bg-[#e0f7da]">
+                เบิกสินค้า
+            </button>
+        </div>
 
-                    <div class="col-span-3 bg-green-50 p-2 rounded-lg border border-green-100">
-                        <p class="text-[10px] text-gray-500">ช่วงเวลาในการแสดงวันที่</p>
-                        <div class="flex items-center gap-2 text-xs">
-                            เริ่มวันที่ <input type="text" value="25/07/90" class="border rounded p-0.5 w-20 text-center">
-                        </div>
-                    </div>
-
-                    <div class="col-span-3 flex justify-end">
-                        <select class="border rounded px-3 py-1 text-sm bg-white"><option>เลือกประเภท</option></select>
-                    </div>
-
-                    <div class="col-span-1 text-right text-sm">รายการยา</div>
-                    <div class="col-span-3">
-                        <select class="w-full border rounded-md p-1.5 outline-none px-3 text-sm">
-                            <option>Cisplatin Injection 50 mg</option>
-                        </select>
-                    </div>
-
-                    <div class="col-span-1 text-right text-sm">วันที่</div>
-                    <div class="col-span-1"><input type="text" value="25/07/90" class="w-full border rounded-md p-1.5 text-center text-sm"></div>
-
-                    <div class="col-span-3 bg-green-50 p-2 rounded-lg border border-green-100">
-                        <div class="flex items-center gap-2 text-xs">
-                            ถึงวันที่ <input type="text" value="30/07/90" class="border rounded p-0.5 w-20 text-center">
-                        </div>
-                    </div>
-
-                    <div class="col-span-3 flex justify-end">
-                        <button class="border border-gray-400 px-3 py-1 rounded text-sm bg-white hover:bg-gray-50">เลือกวันหมดอายุ</button>
-                    </div>
-
-                    <div class="col-span-1 text-right text-sm">หมายเหตุ</div>
-                    <div class="col-span-11"><input type="text" value="ให้โดยบุคลากรทางการแพทย์ เฝ้าระวังอาการแพ้และคลื่นไส้" class="w-full border rounded-md p-1.5 text-sm px-3"></div>
+        <div class="flex-1 p-2 flex gap-2 overflow-hidden bg-[#fffff0] border-4 border-[#e0ebd0]">
+            <!-- Left Sidebar -->
+            <div class="w-80 border border-gray-400 bg-white flex flex-col shadow-inner">
+                <div class="p-2 bg-[#f8fdf4] border-b border-gray-400 space-y-1">
+                    <select class="w-full border border-green-500 p-1 text-xs font-medium outline-none rounded-sm bg-white">
+                        <option>แสดงรายชื่อสินค้าทั้งหมด</option>
+                    </select>
+                    <input type="text" placeholder="ค้นหาสินค้าตามรหัสสินค้า" class="w-full border border-gray-400 p-1 text-xs outline-none rounded-sm">
+                    <input type="text" placeholder="ค้นหาสินค้าตามชื่อสินค้า" class="w-full border border-gray-400 p-1 text-xs outline-none rounded-sm">
+                </div>
+                <div class="overflow-y-auto flex-1 bg-white">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-gray-100 border-b border-gray-400 sticky top-0">
+                            <tr>
+                                <th class="p-1 border-r border-gray-300 font-medium w-16">รหัสสินค้า</th>
+                                <th class="p-1 border-r border-gray-300 font-medium">ชื่อสินค้า</th>
+                                <th class="p-1 font-medium w-12 text-center">เหลือ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00001</td><td class="p-1 border-r border-gray-200">6 IN 1 60'S VITAL-M</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00002</td><td class="p-1 border-r border-gray-200">A.N.H.HORMONE 30'S</td><td class="p-1 text-right">995</td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00003</td><td class="p-1 border-r border-gray-200">A.N.T.2 SAC</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00004</td><td class="p-1 border-r border-gray-200">ACA 2 มก.</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00005</td><td class="p-1 border-r border-gray-200">ACA 5 มก.</td><td class="p-1 text-right">1396</td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00006</td><td class="p-1 border-r border-gray-200">ACCU-CHEK SOFTCL...</td><td class="p-1 text-right">997</td></tr>
+                            <tr class="bg-blue-600 text-white cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00007</td><td class="p-1 border-r border-gray-200">ACCUPRIL 20มก.14'S</td><td class="p-1 text-right">1497</td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00008</td><td class="p-1 border-r border-gray-200">ACCUPRIL 5มก.14'S</td><td class="p-1 text-right">1100</td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00009</td><td class="p-1 border-r border-gray-200">ACETAR 1000มล.ฉีด</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00010</td><td class="p-1 border-r border-gray-200">ACNA BRITE 30'S</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00011</td><td class="p-1 border-r border-gray-200">ACNA CARE 30'S</td><td class="p-1 text-right">1000</td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00012</td><td class="p-1 border-r border-gray-200">ACNA CARE เจล 10ก.</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00013</td><td class="p-1 border-r border-gray-200">ACNACARE โฟม</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00014</td><td class="p-1 border-r border-gray-200">ACNE-AID ลิควิด 100มล.</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00015</td><td class="p-1 border-r border-gray-200">ACNE-AID สบู่ 100ก.</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00016</td><td class="p-1 border-r border-gray-200">ACNETIN-A 0.05 %</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00017</td><td class="p-1 border-r border-gray-200">ACNOCIN 150มก.10'S</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00018</td><td class="p-1 border-r border-gray-200">ACNOTIN 10มก.5'S</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00019</td><td class="p-1 border-r border-gray-200">ACNOTIN 20มก.5'S</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00020</td><td class="p-1 border-r border-gray-200">ACTAL 10'S</td><td class="p-1 text-right"></td></tr>
+                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00021</td><td class="p-1 border-r border-gray-200">ACTIFED 20'S</td><td class="p-1 text-right">1000</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="flex-1 bg-white border border-gray-300 rounded-2xl overflow-hidden shadow-sm flex flex-col">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 border-b">
-                        <tr class="text-gray-700">
-                            <th class="p-3 border-r font-medium w-20">คลัง</th>
-                            <th class="p-3 border-r font-medium">บาร์โค้ด</th>
-                            <th class="p-3 border-r font-medium">ช่องสินค้า</th>
-                            <th class="p-3 border-r font-medium w-24">นับได้</th>
-                            <th class="p-3 border-r font-medium w-24">ยอดในเครื่อง</th>
-                            <th class="p-3 border-r font-medium w-24">สถานะ</th>
-                            <th class="p-3 font-medium w-24">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y text-center">
-                        <tr class="h-12">
-                            <td class="border-r">1</td>
-                            <td class="border-r">8851234567890</td>
-                            <td class="border-r text-left px-4">Cisplatin Injection 50 mg</td>
-                            <td class="border-r">5</td>
-                            <td class="border-r">0</td>
-                            <td class="border-r text-yellow-600 font-medium italic">รอรับยา</td>
-                            <td><button class="bg-green-500 text-white px-4 py-1 rounded-md text-xs shadow-sm hover:bg-green-600">ยืนยัน</button></td>
-                        </tr>
-                        <tr class="h-12"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-                        <tr class="h-12"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-                        <tr class="h-12"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-                    </tbody>
-                </table>
-            </div>
+            <!-- Right Main Area -->
+            <div class="flex-1 flex flex-col border border-gray-400 bg-white shadow-sm overflow-hidden">
+                <!-- Data Entry Form -->
+                <div class="p-2 space-y-1 text-[11px] bg-[#f8fdf4]">
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-1 w-2/3">
+                            <div class="flex items-center">
+                                <label class="w-32 font-medium">เลขที่รายการสั่งซื้อสินค้า</label>
+                                <input type="text" class="w-48 border border-gray-300 bg-[#e0f7fa] p-1 font-bold text-lg text-black outline-none rounded-sm" value="Order-2550-002">
+                                <label class="w-36 text-right pr-2 font-medium text-red-600 ml-4">เลขที่เอกสารเปลี่ยนเลขที่บิล</label>
+                                <input type="text" class="w-32 border border-gray-300 bg-white p-1 outline-none rounded-sm">
+                            </div>
+                            <div class="flex items-center pt-1">
+                                <label class="w-32 font-medium">รหัสผู้แทนจำหน่าย</label>
+                                <input type="text" class="w-24 border border-gray-300 bg-white p-1 outline-none rounded-sm">
+                                <label class="w-24 text-right pr-2 font-medium">ชื่อผู้แทนจำหน่าย</label>
+                                <div class="flex flex-1">
+                                    <input type="text" class="flex-1 border border-gray-300 bg-white p-1 outline-none rounded-l-sm border-r-0">
+                                    <button class="bg-[#e6f4ea] border border-green-500 px-2 hover:bg-green-100 rounded-r-sm font-bold text-blue-600">🔍</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 4 Buttons Grid -->
+                        <div class="grid grid-cols-2 gap-px w-[200px] border border-green-400 bg-gray-200">
+                            <button class="flex flex-col items-center justify-center p-1 hover:bg-gray-100 text-[10px] text-blue-900 font-medium bg-white h-12">
+                                <span class="text-xl mb-0 text-blue-700">💾</span>
+                                บันทึกรายการสั่งซื้อ
+                            </button>
+                            <button class="flex flex-col items-center justify-center p-1 hover:bg-gray-100 text-[10px] text-blue-900 font-medium bg-white h-12">
+                                <span class="text-xl mb-0 text-gray-500">🖨️</span>
+                                พิมพ์ใบสั่งซื้อสินค้า
+                            </button>
+                            <button class="flex flex-col items-center justify-center p-1 hover:bg-gray-100 text-[10px] text-green-700 font-medium bg-white h-12">
+                                <span class="text-xl mb-0 text-blue-400">📄</span>
+                                สร้างรายการใหม่
+                            </button>
+                            <button class="flex flex-col items-center justify-center p-1 hover:bg-gray-100 text-[10px] text-blue-900 font-medium bg-white h-12">
+                                <span class="text-xl mb-0 text-yellow-500">🔍</span>
+                                ค้นหารายการสั่งซื้อ
+                            </button>
+                        </div>
+                    </div>
 
-            <div class="flex justify-between items-center py-2">
-                <button class="bg-[#6b7280] text-white px-10 py-2 rounded-lg shadow-md hover:bg-gray-700 transition">กลับ</button>
-                <button class="bg-[#6b7280] text-white px-10 py-2 rounded-lg shadow-md hover:bg-gray-700 transition">ถัดไป</button>
+                    <div class="flex items-center pt-2 mt-2 space-x-2 border-t border-gray-300">
+                        <div class="flex-1">
+                            <label class="block font-medium mb-0.5">วันที่สั่งซื้อ</label>
+                            <select class="border border-green-400 p-1 w-full bg-[#e0f7fa] outline-none rounded-sm text-xs"><option>14 มิถุนายน 2550</option></select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block font-medium mb-0.5">นัดรับสินค้าวันที่</label>
+                            <select class="border border-green-400 p-1 w-full bg-white outline-none rounded-sm text-xs"><option>14 มิถุนายน 2550</option></select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block font-medium mb-0.5">นัดชำระเงินวันที่</label>
+                            <select class="border border-green-400 p-1 w-full bg-white outline-none rounded-sm text-xs"><option>14 มิถุนายน 2550</option></select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-end pt-2 space-x-2">
+                        <div class="w-32">
+                            <label class="block font-medium mb-0.5">บาร์โค้ด</label>
+                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-[#e0f7fa]" value="8850339007520">
+                        </div>
+                        <div class="flex-1"></div>
+                        <div class="w-20 text-center">
+                            <label class="block font-medium mb-0.5">จุดสั่งซื้อ</label>
+                            <input type="text" class="border border-gray-300 p-1 w-full text-red-600 outline-none rounded-sm bg-[#e0f7fa] text-center" value="0">
+                        </div>
+                        <div class="w-24 text-center">
+                            <label class="block font-medium mb-0.5">เหลือจำนวน</label>
+                            <input type="text" class="border border-gray-300 p-1 w-full text-red-600 outline-none rounded-sm bg-white text-center" value="1497">
+                        </div>
+                        <div class="flex flex-col space-y-1">
+                            <button class="bg-[#d1e8ff] border border-[#0066cc] text-[#0066cc] hover:bg-blue-200 rounded-sm w-8 h-6 flex items-center justify-center font-bold text-lg leading-none shadow-sm pb-1">+</button>
+                            <button class="bg-[#d1e8ff] border border-[#0066cc] text-[#0066cc] hover:bg-blue-200 rounded-sm w-8 h-6 flex items-center justify-center font-bold text-lg leading-none shadow-sm pb-1">-</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-end space-x-0.5 mt-1 pb-2">
+                        <div class="w-20">
+                            <label class="block font-medium mb-0.5 text-center">รหัสสินค้า</label>
+                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-[#e0f7fa]" value="PD-00007">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block font-medium mb-0.5">ชื่อสินค้า(ชื่อทางการค้า)</label>
+                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-white" value="ACCUPRIL 20มก.14'S">
+                        </div>
+                        <div class="w-16">
+                            <label class="block font-medium mb-0.5 text-center">ราคา/หน่วย</label>
+                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-white text-center" value="50">
+                        </div>
+                        <div class="w-16">
+                            <label class="block font-medium mb-0.5 text-center">สั่งซื้อจำนวน</label>
+                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-white text-center" value="0">
+                        </div>
+                        <div class="w-16">
+                            <label class="block font-medium mb-0.5 text-center">หน่วย</label>
+                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-[#e0f7fa] text-center" value="แผง">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order List Table -->
+                <div class="flex-1 overflow-y-auto border-t-2 border-black bg-white">
+                    <table class="w-full text-xs text-center border-collapse">
+                        <thead class="bg-white border-b-2 border-black">
+                            <tr>
+                                <th class="p-1 border-r border-black font-medium w-24">รหัสสินค้า</th>
+                                <th class="p-1 border-r border-black font-medium">ชื่อสินค้า</th>
+                                <th class="p-1 border-r border-black font-medium w-20">ราคา/หน่วย</th>
+                                <th class="p-1 border-r border-black font-medium w-20">สั่งซื้อจำนวน</th>
+                                <th class="p-1 font-medium w-16">หน่วย</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-blue-600 text-white h-6">
+                                <td class="border-r border-white"></td><td class="border-r border-white"></td><td class="border-r border-white"></td><td class="border-r border-white"></td><td></td>
+                            </tr>
+                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
+                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
+                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
+                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
+                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Totals -->
+                <div class="p-2 bg-[#fffff0] border-t border-gray-400 flex justify-between items-center text-sm font-bold mt-auto h-12">
+                    <div class="flex items-center pl-2">
+                        <span class="mr-2 text-gray-800">รวมจำนวนรายการสินค้าที่สั่งซื้อ :</span>
+                        <input type="text" class="w-16 border border-gray-400 p-1 text-center bg-[#e0f7fa] outline-none shadow-inner font-bold" value="0">
+                        <span class="ml-2 text-gray-800">รายการ</span>
+                    </div>
+                    <div class="flex items-center pr-2">
+                        <span class="mr-2 text-gray-800">รวมเงิน :</span>
+                        <input type="text" class="w-32 border border-gray-400 p-1 text-right bg-white outline-none shadow-inner font-bold">
+                        <span class="ml-2 text-gray-800">บาท</span>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
