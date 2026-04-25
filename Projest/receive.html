@@ -5,256 +5,1097 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เบิก-รับยา - Chemotherapy Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Search Bill/Lot Modal -->
+    <div id="searchBillModal" class="modal-wrapper">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden modal-card flex flex-col h-[70vh]">
+            <div class="office-header p-4 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="search" class="w-6 h-6"></i>
+                    <div>
+                        <h3 class="font-bold">ค้นหารายการบิล / Lot No.</h3>
+                        <p class="text-[10px] opacity-80 uppercase tracking-widest">Search Transaction & Stock</p>
+                    </div>
+                </div>
+                <button onclick="closeSearchBillModal()" class="hover:bg-white/20 p-1 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="p-4 bg-blue-50 border-b space-y-4 shrink-0">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <label class="text-[10px] font-bold text-blue-700 uppercase mb-1 block">ค้นหาด้วย Lot No. หรือ ชื่อยา</label>
+                        <i data-lucide="search" class="absolute left-3 top-[32px] w-4 h-4 text-gray-400"></i>
+                        <input type="text" id="bill-search-input" placeholder="พิมพ์เลข Lot หรือ ชื่อยา..." class="w-full pl-10 pr-4 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" onkeyup="filterBillSearch()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-blue-700 uppercase mb-1 block">ประเภทรายการ</label>
+                        <select class="w-full border-blue-200 p-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>ทั้งหมด</option>
+                            <option>เฉพาะรายการรับยา (RC)</option>
+                            <option>เฉพาะรายการเบิกยา (IS)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-auto p-4 bg-gray-100">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-[11px] uppercase tracking-wider text-gray-500 font-bold border-b">
+                                <th class="p-3 w-32">วันที่</th>
+                                <th class="p-3 w-40">เลขที่บิล</th>
+                                <th class="p-3 w-32">Lot No.</th>
+                                <th class="p-3">ชื่อยา (Trade Name)</th>
+                                <th class="p-3 w-32 text-right">จำนวนคงเหลือ</th>
+                                <th class="p-3 w-20 text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bill-search-results" class="text-sm divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-white border-t flex justify-end shrink-0">
+                <button onclick="closeSearchBillModal()" class="office-btn-primary px-10">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Scan Result Modal -->
+    <div id="scanResultModal" class="modal-wrapper">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden modal-card flex flex-col">
+            <div class="bg-blue-600 p-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="barcode" class="w-5 h-5"></i>
+                    <h3 class="font-bold">ข้อมูลยาที่สแกน</h3>
+                </div>
+                <button onclick="closeScanModal()" class="hover:bg-blue-700 p-1 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="bg-blue-50 p-3 rounded border border-blue-100">
+                    <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">รหัสสินค้า / Product ID</p>
+                    <p id="scan-id" class="text-lg font-black text-blue-900"></p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">ชื่อยา (Generic/Trade Name)</p>
+                    <p id="scan-name" class="text-sm font-bold text-gray-700 leading-tight"></p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex-1">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">จำนวนที่รับ/เบิก</p>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="scan-qty" value="" min="1" class="office-input w-full text-center text-xl font-bold text-blue-600 border-2 border-blue-400">
+                            <span id="scan-unit" class="text-sm font-bold text-gray-500">ขวด</span>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">สถานที่เก็บ</p>
+                        <select id="scan-storage" class="office-input w-full bg-white text-sm font-bold">
+                            <option value="">อุณหภูมิห้อง</option>
+                            <option value="">ตู้เย็น</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="confirmScanAdd()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i> เพิ่มรายการ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
-        .active-link { background-color: #dbeafe; color: #2563eb; border-radius: 0.5rem; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f9; opacity: 0; transition: opacity 0.4s ease-in-out; }
+        body.ready { opacity: 1; }
+        .office-header { background: linear-gradient(to right, #1e3a8a, #2563eb); }
+        .office-card { background: white; border-radius: 4px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .office-table thead { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; }
+        .office-table th, .office-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
+        .office-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.5rem; font-size: 0.875rem; transition: all 0.2s; }
+        .office-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px #dbeafe; outline: none; }
+        .active-link { background-color: #f1f5f9; color: #1e3a8a; font-weight: bold; border-left: 4px solid #1e3a8a !important; }
+        nav a, nav div { border-left: 4px solid transparent; border-radius: 8px; }
+        
+        /* Action Buttons Grid Style */
+        .action-button { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; font-weight: bold; transition: all 0.2s;
+            background-color: white;
+        }
+        .action-button:hover { background-color: #f8fafc; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .blue-btn { color: #1e40af; }
+        .green-btn { color: #166534; }
+        
+        .lucide { width: 18px; height: 18px; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Smooth Modal System */
+        .modal-wrapper { 
+            position: fixed; inset: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(0px);
+            visibility: hidden; opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateZ(0);
+        }
+        .modal-wrapper.active { 
+            visibility: visible; opacity: 1; pointer-events: auto;
+            backdrop-filter: blur(4px);
+        }
+        .modal-card {
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-wrapper.active .modal-card {
+            transform: translateY(0);
+        }
+        
+        /* Icon Flash Prevention */
+        [data-lucide] { visibility: hidden; }
+        .lucide { visibility: visible !important; }
+
+        /* Antigravity Dark Theme for Stock Receive Modal */
+        .antigravity-dark {
+            background-color: #1a1b1e !important;
+            color: #d1d5db !important;
+        }
+        .antigravity-input {
+            background-color: #2c2d33 !important;
+            border: 1px solid #3f3f46 !important;
+            color: #ecfdf5 !important;
+            font-weight: 500;
+        }
+        .antigravity-label {
+            color: #94a3b8 !important;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .neon-orange {
+            color: #fb923c !important;
+            text-shadow: 0 0 8px rgba(251, 146, 60, 0.5);
+            font-weight: bold;
+        }
+        .pastel-blue { color: #bae6fd; }
+        .pastel-pink { color: #fbcfe8; }
+        .pastel-green { color: #d1fae5; }
+        
+        .stock-table thead { background-color: #2c2d33; color: #94a3b8; }
+        .stock-table tr { border-bottom: 1px solid #3f3f46; }
+        .stock-table tr:hover { background-color: #25262b; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="bg-gray-100 font-sarabun flex min-h-screen">
 
-    <aside class="w-64 bg-white border-r flex flex-col shrink-0">
+    <aside class="w-64 bg-white border-r flex flex-col shrink-0 sticky top-0 h-screen">
         <div class="p-6">
             <h1 class="text-blue-900 font-bold text-lg leading-tight">ระบบจัดการยาเคมีบำบัด</h1>
-            <p class="text-gray-400 text-xs">Chemotherapy Management</p>
+            <p class="text-gray-400 text-xs uppercase tracking-wider">Chemo Pharmacy</p>
         </div>
         <nav class="flex-1 px-4 space-y-2">
-            <a href="index.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">🏠</span><span>หน้าหลัก</span>
-            </a>
-            <a href="manage.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">📄</span><span>การจัดการข้อมูลยา</span>
-            </a>
             <div class="flex items-center p-3 active-link">
-                <span class="mr-3 text-xl">📋</span><span class="font-medium">เบิก-รับยา</span>
+                <i data-lucide="clipboard-list" class="mr-3 text-blue-900"></i>
+                <span class="text-sm font-bold">เบิก-รับยา</span>
             </div>
-            <a href="dispense.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">📝</span><span>จัดการใบสั่งยา</span>
+            <a href="manage.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="file-text" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">การจัดการข้อมูลยา</span>
             </a>
-            <a href="prescription.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">💊</span><span>จ่ายยา</span>
+            <a href="dispense.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="file-edit" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการใบสั่งยา</span>
             </a>
-            <a href="patients.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">👥</span><span>จัดการรายชื่อผู้ป่วย</span>
+            <a href="prescription.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="pill" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จ่ายยา</span>
             </a>
-            <a href="status.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">🔍</span><span>ตรวจสอบสถานะยา</span>
+            <a href="patients.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="users" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการรายชื่อผู้ป่วย</span>
             </a>
-            <a href="report.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">📊</span><span>จัดพิมพ์รายงาน</span>
+            <a href="status.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="search" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">ตรวจสอบสถานะยา</span>
+            </a>
+            <a href="report.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="bar-chart-2" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดพิมพ์รายงาน</span>
             </a>
         </nav>
         <div class="p-4 border-t flex items-center bg-gray-50 mt-auto">
-            <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
-            <div><p class="text-sm font-medium text-gray-700">เภสัชกร สมมุติ</p><p class="text-xs text-gray-500">Admin</p></div>
+            <div class="w-10 h-10 bg-blue-100 rounded-full mr-3 border border-blue-200 flex items-center justify-center text-blue-600"><i data-lucide="user"></i></div>
+            <div><p class="text-sm font-bold text-gray-700">เภสัชกร สมชาย</p><p class="text-xs text-gray-500 uppercase">Pharmacist</p></div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col overflow-hidden bg-[#f0f9e8]">
-        <header class="bg-white border-b px-8 py-4 flex justify-center space-x-8 text-lg shrink-0">
-            <a href="manage.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จัดการข้อมูลยา</a>
-            <a href="receive.html" class="text-blue-900 font-bold border-b-2 border-blue-900 pb-1">เบิก-รับยา</a>
-            <a href="dispense.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จัดการใบสั่งยา</a>
-            <a href="prescription.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จ่ายยา</a>
-        </header>
-
-        <div class="flex border-b-2 border-green-500 bg-green-100 p-2 pb-0">
-            <button class="flex-1 py-2 bg-green-500 font-bold text-white text-sm shadow-sm rounded-t-lg border-green-600 border">
-                เบิก-รับยา
-            </button>
-        </div>
-
-        <div class="flex-1 p-2 flex gap-2 overflow-hidden bg-[#fffff0] border-4 border-[#e0ebd0]">
-            <!-- Left Sidebar -->
-            <div class="w-80 border border-gray-400 bg-white flex flex-col shadow-inner">
-                <div class="p-2 bg-[#f8fdf4] border-b border-gray-400 space-y-1">
-                    <select class="w-full border border-green-500 p-1 text-xs font-medium outline-none rounded-sm bg-white">
-                        <option>แสดงรายชื่อยาทั้งหมด</option>
-                        <option>แสดงยา High Alert</option>
-                        <option>แสดงยาใกล้หมดอายุ</option>
-                        <option>แสดงยาหมดอายุ</option>
-                    </select>
-                    <input type="text" placeholder="ค้นหาตาม Lot" class="w-full border border-gray-400 p-1 text-xs outline-none rounded-sm">
-                    <input type="text" placeholder="ค้นหาตามชื่อทางการค้า" class="w-full border border-gray-400 p-1 text-xs outline-none rounded-sm">
-                </div>
-                <div class="overflow-y-auto flex-1 bg-white">
-                    <table class="w-full text-xs text-left">
-                        <thead class="bg-gray-100 border-b border-gray-400 sticky top-0">
-                            <tr>
-                                <th class="p-1 border-r border-gray-300 font-medium w-16">รหัสสินค้า</th>
-                                <th class="p-1 border-r border-gray-300 font-medium">ชื่อสินค้า</th>
-                                <th class="p-1 font-medium w-12 text-center">เหลือ</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00001</td><td class="p-1 border-r border-gray-200">6 IN 1 60'S VITAL-M</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00002</td><td class="p-1 border-r border-gray-200">A.N.H.HORMONE 30'S</td><td class="p-1 text-right">995</td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00003</td><td class="p-1 border-r border-gray-200">A.N.T.2 SAC</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00004</td><td class="p-1 border-r border-gray-200">ACA 2 มก.</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00005</td><td class="p-1 border-r border-gray-200">ACA 5 มก.</td><td class="p-1 text-right">1396</td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00006</td><td class="p-1 border-r border-gray-200">ACCU-CHEK SOFTCL...</td><td class="p-1 text-right">997</td></tr>
-                            <tr class="bg-blue-600 text-white cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00007</td><td class="p-1 border-r border-gray-200">ACCUPRIL 20มก.14'S</td><td class="p-1 text-right">1497</td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00008</td><td class="p-1 border-r border-gray-200">ACCUPRIL 5มก.14'S</td><td class="p-1 text-right">1100</td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00009</td><td class="p-1 border-r border-gray-200">ACETAR 1000มล.ฉีด</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00010</td><td class="p-1 border-r border-gray-200">ACNA BRITE 30'S</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00011</td><td class="p-1 border-r border-gray-200">ACNA CARE 30'S</td><td class="p-1 text-right">1000</td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00012</td><td class="p-1 border-r border-gray-200">ACNA CARE เจล 10ก.</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00013</td><td class="p-1 border-r border-gray-200">ACNACARE โฟม</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00014</td><td class="p-1 border-r border-gray-200">ACNE-AID ลิควิด 100มล.</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00015</td><td class="p-1 border-r border-gray-200">ACNE-AID สบู่ 100ก.</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00016</td><td class="p-1 border-r border-gray-200">ACNETIN-A 0.05 %</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00017</td><td class="p-1 border-r border-gray-200">ACNOCIN 150มก.10'S</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00018</td><td class="p-1 border-r border-gray-200">ACNOTIN 10มก.5'S</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00019</td><td class="p-1 border-r border-gray-200">ACNOTIN 20มก.5'S</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00020</td><td class="p-1 border-r border-gray-200">ACTAL 10'S</td><td class="p-1 text-right"></td></tr>
-                            <tr class="hover:bg-blue-50 cursor-pointer"><td class="p-1 border-r border-gray-200">PD-00021</td><td class="p-1 border-r border-gray-200">ACTIFED 20'S</td><td class="p-1 text-right">1000</td></tr>
-                        </tbody>
-                    </table>
+    <main class="flex-1 flex flex-col">
+        <header class="office-header text-white px-8 py-4 flex justify-between items-center shrink-0 shadow-lg sticky top-0 z-20">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i data-lucide="clipboard-list" class="w-6 h-6"></i></div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight leading-none">ระบบเบิก-รับยา</h1>
+                    <p class="text-[10px] text-blue-100 uppercase tracking-widest mt-1 opacity-80">Inventory Inbound & Outbound</p>
                 </div>
             </div>
 
-            <!-- Right Main Area -->
-            <div class="flex-1 flex flex-col border border-gray-400 bg-white shadow-sm overflow-hidden">
-                <!-- Data Entry Form -->
-                <div class="p-2 space-y-1 text-[11px] bg-[#f8fdf4]">
-                    <div class="flex justify-between items-start">
-                        <div class="space-y-1 w-2/3">
-                            <div class="flex items-center">
-                                <label class="w-32 font-medium">เลขที่บิล</label>
-                                <input type="text" class="w-48 border border-gray-300 bg-[#e0f7fa] p-1 font-bold text-lg text-black outline-none rounded-sm" value="BILL-2024-001">
-                                <label class="w-36 text-right pr-2 font-medium text-red-600 ml-4">เลข HN</label>
-                                <input type="text" class="w-32 border border-gray-300 bg-white p-1 outline-none rounded-sm">
-                            </div>
-                            <div class="flex items-center pt-1">
-                                <label class="w-32 font-medium text-gray-700">ชื่อเภสัชกร</label>
-                                <div class="flex flex-1 max-w-md">
-                                    <input type="text" class="flex-1 border border-green-500 bg-white p-1 outline-none rounded-l-sm border-r-0" value="เภสัชกร สมมุติ">
-                                    <button class="bg-[#e6f4ea] border border-green-500 px-2 hover:bg-green-100 rounded-r-sm flex items-center justify-center">🔍</button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- 4 Buttons Grid -->
-                        <div class="grid grid-cols-2 gap-px w-[200px] border border-green-400 bg-gray-200">
-                            <button class="flex flex-col items-center justify-center p-1 hover:bg-gray-100 text-[10px] text-blue-900 font-medium bg-white h-12">
-                                <span class="text-xl mb-0 text-blue-700">💾</span>
-                                บันทึกรายการสั่งซื้อ
-                            </button>
-                            <button class="flex flex-col items-center justify-center p-1 hover:bg-gray-100 text-[10px] text-blue-900 font-medium bg-white h-12">
-                                <span class="text-xl mb-0 text-gray-500">🖨️</span>
-                                พิมพ์ใบสั่งซื้อสินค้า
-                            </button>
-                            <button class="flex flex-col items-center justify-center p-1 hover:bg-gray-100 text-[10px] text-green-700 font-medium bg-white h-12">
-                                <span class="text-xl mb-0 text-blue-400">📄</span>
-                                สร้างรายการใหม่
-                            </button>
-                            <button class="flex flex-col items-center justify-center p-1 hover:bg-gray-100 text-[10px] text-blue-900 font-medium bg-white h-12">
-                                <span class="text-xl mb-0 text-yellow-500">🔍</span>
-                                ค้นหารายการสั่งซื้อ
-                            </button>
-                        </div>
-                    </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-[10px] uppercase font-bold opacity-70">เภสัชกรผู้บันทึก</p>
+                    <p class="text-sm font-bold">สมชาย ใจดี</p>
+                </div>
+            </div>
+        </header>
 
-                    <div class="flex items-center pt-2 mt-2 space-x-2 border-t border-gray-300">
-                        <div class="flex-1">
-                            <label class="block font-medium mb-0.5">วันที่สั่งซื้อ</label>
-                            <select class="border border-green-400 p-1 w-full bg-[#e0f7fa] outline-none rounded-sm text-xs"><option>14 มิถุนายน 2550</option></select>
-                        </div>
-                        <div class="flex-1">
-                            <label class="block font-medium mb-0.5">นัดรับสินค้าวันที่</label>
-                            <select class="border border-green-400 p-1 w-full bg-white outline-none rounded-sm text-xs"><option>14 มิถุนายน 2550</option></select>
-                        </div>
-                        <div class="flex-1">
-                            <label class="block font-medium mb-0.5">นัดชำระเงินวันที่</label>
-                            <select class="border border-green-400 p-1 w-full bg-white outline-none rounded-sm text-xs"><option>14 มิถุนายน 2550</option></select>
-                        </div>
-                    </div>
-
-                    <div class="flex items-end pt-2 space-x-2">
-                        <div class="w-32">
-                            <label class="block font-medium mb-0.5">บาร์โค้ด</label>
-                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-[#e0f7fa]" value="8850339007520">
-                        </div>
-                        <div class="flex-1"></div>
-                        <div class="w-20 text-center">
-                            <label class="block font-medium mb-0.5">จุดสั่งซื้อ</label>
-                            <input type="text" class="border border-gray-300 p-1 w-full text-red-600 outline-none rounded-sm bg-[#e0f7fa] text-center" value="0">
-                        </div>
-                        <div class="w-24 text-center">
-                            <label class="block font-medium mb-0.5">เหลือจำนวน</label>
-                            <input type="text" class="border border-gray-300 p-1 w-full text-red-600 outline-none rounded-sm bg-white text-center" value="1497">
-                        </div>
-                        <div class="flex flex-col space-y-1">
-                            <button class="bg-[#d1e8ff] border border-[#0066cc] text-[#0066cc] hover:bg-blue-200 rounded-sm w-8 h-6 flex items-center justify-center font-bold text-lg leading-none shadow-sm pb-1">+</button>
-                            <button class="bg-[#d1e8ff] border border-[#0066cc] text-[#0066cc] hover:bg-blue-200 rounded-sm w-8 h-6 flex items-center justify-center font-bold text-lg leading-none shadow-sm pb-1">-</button>
-                        </div>
-                    </div>
-
-                    <div class="flex items-end space-x-0.5 mt-1 pb-2">
-                        <div class="w-20">
-                            <label class="block font-medium mb-0.5 text-center">รหัสสินค้า</label>
-                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-[#e0f7fa]" value="PD-00007">
-                        </div>
-                        <div class="flex-1">
-                            <label class="block font-medium mb-0.5">ชื่อสินค้า(ชื่อทางการค้า)</label>
-                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-white" value="ACCUPRIL 20มก.14'S">
-                        </div>
-                        <div class="w-16">
-                            <label class="block font-medium mb-0.5 text-center">ราคา/หน่วย</label>
-                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-white text-center" value="50">
-                        </div>
-                        <div class="w-16">
-                            <label class="block font-medium mb-0.5 text-center">สั่งซื้อจำนวน</label>
-                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-white text-center" value="0">
-                        </div>
-                        <div class="w-16">
-                            <label class="block font-medium mb-0.5 text-center">หน่วย</label>
-                            <input type="text" class="border border-gray-300 p-1 w-full outline-none rounded-sm bg-[#e0f7fa] text-center" value="ขวด">
-                        </div>
+        <div class="p-4 flex gap-4">
+            
+            <!-- Left Side: Drug Master List -->
+            <div class="w-80 office-card flex flex-col rounded shadow-sm bg-white shrink-0">
+                <div class="p-3 bg-gray-50 border-b space-y-2">
+                    <select class="w-full border p-2 rounded text-xs font-bold outline-none focus:border-blue-500" onchange="filterByStorage(this.value)">
+                        <option value="">แสดงรายชื่อยาทั้งหมด</option>
+                        <option value="">ยาเก็บอุณหภูมิปกติ (Room Temp)</option>
+                        <option value="">ยาเก็บในตู้เย็น (2-8°C)</option>
+                    </select>
+                    <div class="relative">
+                        <input type="text" id="master-search" oninput="searchMaster(this.value)" placeholder="ค้นหาตาม Lot หรือ ชื่อยา..." class="w-full border p-2 pl-8 rounded text-xs outline-none focus:border-blue-500">
+                        <i data-lucide="search" class="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400"></i>
                     </div>
                 </div>
-
-                <!-- Order List Table -->
-                <div class="flex-1 overflow-y-auto border-t-2 border-black bg-white">
-                    <table class="w-full text-xs text-center border-collapse">
-                        <thead class="bg-white border-b-2 border-black">
+                <div>
+                    <table class="w-full text-xs">
+                        <thead class="bg-gray-100 sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <th class="p-1 border-r border-black font-medium w-24">รหัสสินค้า</th>
-                                <th class="p-1 border-r border-black font-medium">ชื่อสินค้า</th>
-                                <th class="p-1 border-r border-black font-medium w-20">ราคา/หน่วย</th>
-                                <th class="p-1 border-r border-black font-medium w-20">สั่งซื้อจำนวน</th>
-                                <th class="p-1 font-medium w-16">หน่วย</th>
+                                <th class="border-b p-2 w-10 text-center">เลือก</th>
+                                <th class="border-b p-2 text-center w-24">Lot No.</th>
+                                <th class="border-b p-2 text-left">ชื่อยา (Trade Name)</th>
+                                <th class="border-b p-2 text-center w-24">สถานที่เก็บ</th>
+                                <th class="border-b p-2 text-right w-16">คงเหลือ</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr class="bg-blue-600 text-white h-6">
-                                <td class="border-r border-white"></td><td class="border-r border-white"></td><td class="border-r border-white"></td><td class="border-r border-white"></td><td></td>
-                            </tr>
-                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
-                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
-                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
-                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
-                            <tr class="h-6"><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td class="border-r border-gray-300"></td><td></td></tr>
-                        </tbody>
+                        <tbody id="master-table-body" class="divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
+                <div class="p-3 bg-gray-50 border-t">
+                    <button onclick="addSelectedItems()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm font-bold transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มรายการที่เลือก
+                    </button>
+                </div>
+            </div>
 
-                <!-- Footer Totals -->
-                <div class="p-2 bg-[#fffff0] border-t border-gray-400 flex justify-between items-center text-sm font-bold mt-auto h-20">
-                    <div class="flex items-center pl-2">
-                        <span class="mr-2 text-gray-800">รวมจำนวนรายการสินค้าที่สั่งซื้อ :</span>
-                        <input type="text" class="w-16 border border-gray-400 p-1 text-center bg-[#e0f7fa] outline-none shadow-inner font-bold" value="0">
-                        <span class="ml-2 text-gray-800">รายการ</span>
+            <!-- Right Side: Transaction Panel -->
+            <div class="flex-1 flex flex-col gap-4">
+                
+                <!-- Transaction Details & Actions -->
+                <div class="office-card p-4 rounded grid grid-cols-12 gap-4 bg-white">
+                    <div class="col-span-8 space-y-3">
+                        <div class="flex items-center gap-3 bg-blue-50 p-2 rounded-lg border border-blue-200 mb-1">
+                            <span class="text-xs font-bold w-24 text-blue-700 uppercase tracking-tight flex items-center gap-1"><i data-lucide="barcode" class="w-4 h-4"></i> สแกนรับยา</span>
+                            <input type="text" id="visible-barcode-input" placeholder="คลิกที่นี่และสแกนบาร์โค้ด..." class="border-2 border-blue-400 p-1.5 rounded text-sm flex-1 font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-300 shadow-sm" onkeypress="if(event.key === 'Enter') { handleScan(this.value); this.value=''; }">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">Lot No</span>
+                            <input type="text" value="" class="border p-1.5 rounded text-sm w-48 bg-blue-50 font-black text-blue-900 outline-none">
+                            <span class="text-[10px] text-gray-400 italic">* อ้างอิงจากระบบคลัง</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">หมายเหตุ</span>
+                            <input type="text" placeholder="ระบุเหตุผลการเบิก/รับ..." class="border p-1.5 rounded text-sm flex-1 outline-none focus:border-blue-500">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">ชื่อเภสัชกร</span>
+                            <input type="text" value="" class="border p-1.5 rounded text-sm flex-1 border-green-400 bg-green-50 font-bold outline-none" readonly>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">วิธีการให้ยา</span>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 flex-1 bg-gray-50 p-2 rounded border border-gray-200">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-4 h-4 accent-blue-600"> <span class="text-xs font-medium text-gray-700">ยาฉีดเข้า IV</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-blue-600"> <span class="text-xs font-medium text-gray-700">ยาฉีดเข้าใต้ผิวหนัง (SC)</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-blue-600"> <span class="text-xs font-medium text-gray-700">ยาฉีดเข้าทางกล้ามเนื้อ (IM)</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-blue-600"> <span class="text-xs font-medium text-gray-700">ยาฉีดเข้าทางไขสันหลัง (IT)</span></label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center">
-                        <span class="mr-2 text-gray-800">รวมเงิน :</span>
-                        <input type="text" class="w-32 border border-gray-400 p-1 text-right bg-white outline-none shadow-inner font-bold">
-                        <span class="ml-2 text-gray-800">บาท</span>
+                    
+                    <!-- Action Grid -->
+                    <div class="col-span-4 grid grid-cols-2 border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+                        <button type="button" onclick="openStockReceiveModal()" class="action-button blue-btn border-r border-b">
+                            <i data-lucide="save" class="mb-1 text-blue-600"></i>บันทึกรายการ
+                        </button>
+                        <button type="button" onclick="openHistoryModal()" class="action-button blue-btn border-b">
+                            <i data-lucide="history" class="mb-1 text-blue-600"></i>ประวัติ
+                        </button>
+                        <button type="button" onclick="location.reload()" class="action-button green-btn border-r">
+                            <i data-lucide="file-plus" class="mb-1 text-green-600"></i>รายการใหม่
+                        </button>
+                        <button type="button" onclick="openSearchBillModal()" class="action-button blue-btn">
+                            <i data-lucide="search" class="mb-1 text-blue-600"></i>ค้นหาบิล
+                        </button>
                     </div>
-                    <a href="prescription.html" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-600 transition text-xs font-bold ml-4 mr-2">ถัดไป</a>
+                </div>
+
+                <!-- Item Selection Table -->
+                <div class="office-card rounded flex flex-col bg-white">
+                    <div class="bg-blue-600 text-white px-4 py-2 flex justify-between items-center shrink-0">
+                        <h3 class="text-[10px] font-bold uppercase tracking-widest">รายการเบิก-รับปัจจุบัน / Current Transaction</h3>
+                        <div class="text-[10px] font-bold">SCAN READY <i data-lucide="zap" class="inline w-3 h-3 ml-1 fill-yellow-400 text-yellow-400"></i></div>
+                    </div>
+                    <div>
+                        <table class="w-full text-xs border-collapse">
+                            <thead class="bg-gray-100 sticky top-0 z-10 text-gray-600">
+                                <tr>
+                                    <th class="border-b p-3 text-center w-12">ลำดับ</th>
+                                    <th class="border-b p-3 text-center w-24">Lot No.</th>
+                                    <th class="border-b p-3 text-left">ชื่อรายการยา (Trade Name)</th>
+                                    <th class="border-b p-3 text-center w-24">สถานที่เก็บ</th>
+                                    <th class="border-b p-3 text-center w-24">จำนวน</th>
+                                    <th class="border-b p-3 text-center w-20">หน่วย</th>
+                                    <th class="border-b p-3 text-center w-12"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="checkout-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary Footer -->
+                    <div class="flex justify-between items-center px-4 py-2 bg-yellow-50 border-t border-yellow-100 text-xs font-bold">
+                        <div class="flex gap-6">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500 uppercase text-[9px]">รวมจำนวนรายการ:</span>
+                                <span id="total-items" class="text-base text-blue-900 font-black tracking-tighter">0</span>
+                                <span class="text-gray-400 font-normal">รายการ</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="location.reload()" class="bg-gray-200 text-gray-700 px-4 py-1.5 rounded text-[11px] font-bold hover:bg-gray-300 transition shadow-sm">ยกเลิก</button>
+                            <button type="button" onclick="showNotice('บันทึกและเสร็จสิ้นเรียบร้อย')" class="bg-green-600 text-white px-6 py-1.5 rounded shadow-md text-[11px] font-bold hover:bg-green-700 transition flex items-center gap-1.5">
+                                บันทึกและเสร็จสิ้น <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- Stock Receive Modal (Antigravity Style) -->
+    <div id="stockReceiveModal" class="modal-wrapper">
+        <div class="antigravity-dark rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden modal-card flex flex-col border border-gray-800">
+            <div class="bg-gray-900/50 p-5 flex justify-between items-center border-b border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-500/20 p-2 rounded-lg"><i data-lucide="package-plus" class="w-6 h-6 text-blue-400"></i></div>
+                    <div>
+                        <h2 class="text-lg font-bold text-white tracking-tight">บันทึกการรับเข้ายา (Stock Inbound)</h2>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Medication Inventory Registration</p>
+                    </div>
+                </div>
+                <button onclick="closeStockReceiveModal()" class="text-gray-500 hover:text-white transition-all text-2xl">&times;</button>
+            </div>
+
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Form Section -->
+                <div class="w-2/5 p-6 border-r border-gray-800 overflow-y-auto">
+                    <h3 class="text-xs font-bold text-blue-400 uppercase mb-4 flex items-center gap-2">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> แบบฟอร์มรับเข้ายา
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="antigravity-label block mb-1">ชื่อยา (Medication Name)</label>
+                            <select id="sr-drug-name" class="antigravity-input w-full p-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500" onchange="updateSRCode()">
+                                <option value="">เลือกรายการยา...</option>
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="antigravity-label block mb-1">รหัสยา (PD-ID)</label>
+                                <input type="text" id="sr-pd-id" class="antigravity-input w-full p-2 rounded text-sm opacity-60" readonly>
+                            </div>
+                            <div>
+                                <label class="antigravity-label block mb-1">Batch No.</label>
+                                <input type="text" id="sr-batch" class="antigravity-input w-full p-2 rounded text-sm" placeholder="LOT-XXXX">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="antigravity-label block mb-1">วันหมดอายุ (Expiry Date)</label>
+                                <input type="date" id="sr-expiry" class="antigravity-input w-full p-2 rounded text-sm">
+                            </div>
+                            <div>
+                                <label class="antigravity-label block mb-1">ความเข้มข้น (mg/ml)</label>
+                                <input type="number" id="sr-conc" class="antigravity-input w-full p-2 rounded text-sm" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="antigravity-label block mb-1">ปริมาตรขวด (ml)</label>
+                                <input type="number" id="sr-vol" class="antigravity-input w-full p-2 rounded text-sm" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="antigravity-label block mb-1">จำนวนขวดที่รับ (Vials)</label>
+                                <input type="number" id="sr-qty" class="antigravity-input w-full p-2 rounded text-sm border-blue-500/50" placeholder="0">
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button onclick="saveStockInbound()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg font-bold text-sm shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2 group">
+                                <i data-lucide="save" class="w-4 h-4 group-hover:scale-110 transition"></i> บันทึกสต็อก
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div class="flex-1 flex flex-col bg-black/20 overflow-hidden">
+                    <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+                        <h3 class="text-xs font-bold text-emerald-400 uppercase flex items-center gap-2">
+                            <i data-lucide="history" class="w-3.5 h-3.5"></i> ประวัติการรับยา
+                        </h3>
+                        <div class="flex gap-2">
+                            <button class="bg-gray-800 text-[10px] px-3 py-1 rounded text-gray-400 font-bold hover:text-white transition">วันนี้</button>
+                            <button class="bg-gray-800 text-[10px] px-3 py-1 rounded text-gray-400 font-bold hover:text-white transition">สัปดาห์นี้</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-xs stock-table">
+                            <thead class="sticky top-0 z-10 shadow-md">
+                                <tr>
+                                    <th class="p-3 text-left">วันที่รับ</th>
+                                    <th class="p-3 text-left">ชื่อยา</th>
+                                    <th class="p-3 text-center">จำนวน (ขวด)</th>
+                                    <th class="p-3 text-center">สถานะ</th>
+                                    <th class="p-3 text-center w-24">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sr-history-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Popup Modal -->
+    <div id="srDetailModal" class="modal-wrapper">
+        <div class="antigravity-dark rounded-lg shadow-2xl w-full max-w-sm overflow-hidden modal-card flex flex-col border border-blue-500/30">
+            <div class="bg-blue-900/40 p-4 border-b border-blue-500/30 flex justify-between items-center">
+                <h3 class="font-bold text-blue-300 flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> รายละเอียดล็อตยา</h3>
+                <button onclick="closeSRDetail()" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex justify-between border-b border-gray-800 pb-2">
+                    <span class="text-gray-500 font-bold uppercase text-[9px]">Batch No:</span>
+                    <span id="det-batch" class="font-mono text-emerald-400"></span>
+                </div>
+                <div class="flex justify-between border-b border-gray-800 pb-2">
+                    <span class="text-gray-500 font-bold uppercase text-[9px]">Expiry Date:</span>
+                    <span id="det-expiry" class="font-bold"></span>
+                </div>
+                <div class="flex justify-between border-b border-gray-800 pb-2">
+                    <span class="text-gray-500 font-bold uppercase text-[9px]">Concentration:</span>
+                    <span id="det-conc" class="text-blue-300"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 font-bold uppercase text-[9px]">Volume:</span>
+                    <span id="det-vol" class="text-blue-300"></span>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-900/50 flex justify-center">
+                <button onclick="closeSRDetail()" class="w-full bg-gray-800 hover:bg-gray-700 text-white py-2 rounded text-sm font-bold">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal-wrapper">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl overflow-hidden modal-card flex flex-col h-[80vh]">
+            <div class="office-header p-4 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="history" class="w-6 h-6"></i>
+                    <div>
+                        <h3 class="font-bold">ประวัติการทำรายการคลังยา</h3>
+                        <p class="text-[10px] opacity-80 uppercase tracking-widest">Transaction History</p>
+                    </div>
+                </div>
+                <button onclick="closeHistoryModal()" class="hover:bg-white/20 p-1 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="flex border-b bg-gray-50 shrink-0">
+                <button onclick="switchHistoryTab('receive')" id="tab-receive" class="flex-1 py-3 px-4 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white transition-all">
+                    📦 ประวัติการรับยาเข้าคลัง (Receiving)
+                </button>
+                <button onclick="switchHistoryTab('dispense')" id="tab-dispense" class="flex-1 py-3 px-4 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:bg-gray-100 transition-all">
+                    📤 ประวัติการเบิกยาออกจากคลัง (Issuing)
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="p-3 bg-white border-b flex gap-4 items-center shrink-0">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    <input type="text" placeholder="ค้นหาเลขที่รายการ หรือ ชื่อยา..." class="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="flex items-center gap-1">
+                    <select class="border p-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                        <option value="">วันที่</option>
+                        <!-- Days 1-31 -->
+                        <script>
+                            for(let i=1; i<=31; i++) document.write(`<option value="">${i}</option>`);
+                        </script>
+                    </select>
+                    <select class="border p-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                        <option value="">เดือน</option>
+                        <option value="">ม.ค.</option><option value="">ก.พ.</option><option value="">มี.ค.</option>
+                        <option value="">เม.ย.</option><option value="">พ.ค.</option><option value="">มิ.ย.</option>
+                        <option value="">ก.ค.</option><option value="">ส.ค.</option><option value="">ก.ย.</option>
+                        <option value="">ต.ค.</option><option value="">พ.ย.</option><option value="">ธ.ค.</option>
+                    </select>
+                    <select class="border p-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                        <option value="">ปี (พ.ศ.)</option>
+                        <option value="">2567</option>
+                        <option value="">2566</option>
+                        <option value="">2565</option>
+                    </select>
+                </div>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700">กรองข้อมูล</button>
+            </div>
+
+            <!-- History Table -->
+            <div class="flex-1 overflow-auto p-4 bg-gray-100">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-[11px] uppercase tracking-wider text-gray-500 font-bold border-b">
+                                <th class="p-3 text-center w-16">ลำดับ</th>
+                                <th class="p-3 w-32">วันที่-เวลา</th>
+                                <th class="p-3 w-40">เลขที่เอกสาร</th>
+                                <th class="p-3 w-32">Lot No.</th>
+                                <th class="p-3">รายการยา</th>
+                                <th class="p-3 w-24 text-right">จำนวน</th>
+                                <th class="p-3 w-32 text-center">ผู้ทำรายการ</th>
+                                <th class="p-3 w-24 text-center">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="text-sm divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-white border-t flex justify-end gap-3 shrink-0">
+                <button onclick="window.print()" class="office-btn-secondary flex items-center gap-2 px-6">
+                    <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์รายงานประวัติ
+                </button>
+                <button onclick="closeHistoryModal()" class="office-btn-primary px-8">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notice Modal -->
+    <div id="noticeModal" class="modal-wrapper">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden modal-card flex flex-col">
+            <div id="noticeHeader" class="p-4 text-white flex items-center gap-3 shrink-0">
+                <i id="noticeIcon" data-lucide="info" class="w-6 h-6"></i>
+                <h3 id="noticeTitle" class="font-bold">คำแนะนำ</h3>
+            </div>
+            <div class="p-6 text-center">
+                <p id="noticeMessage" class="text-sm text-gray-700 font-medium"></p>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-center">
+                <button onclick="closeNotice()" class="bg-blue-600 text-white px-10 py-2 rounded font-bold hover:bg-blue-700 transition">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Master Medication Data
+        const masterData = [];
+
+        let barcodeString = "";
+        
+        // Initialize Master Table
+        function initMasterTable(data = masterData) {
+            const tbody = document.getElementById('master-table-body');
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors cursor-pointer";
+                tr.innerHTML = `
+                    <td class="p-2 text-center border-r"><input type="checkbox" value="${item.id}" class="w-4 h-4 accent-blue-600"></td>
+                    <td class="p-2 text-center border-r font-bold text-blue-900">${item.id}</td>
+                    <td class="p-2 border-r font-medium text-gray-700">${item.name}</td>
+                    <td class="p-2 border-r text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.storage === 'ตู้เย็น' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">
+                            ${item.storage}
+                        </span>
+                    </td>
+                    <td class="p-2 text-right font-mono text-gray-600">${item.stock || 0}</td>
+                `;
+                tr.onclick = (e) => {
+                    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+                        handleScan(item.id);
+                    }
+                };
+                tbody.appendChild(tr);
+            });
+        }
+
+        function searchMaster(val) {
+            const filtered = masterData.filter(item => 
+                item.id.toLowerCase().includes(val.toLowerCase()) || 
+                item.name.toLowerCase().includes(val.toLowerCase())
+            );
+            initMasterTable(filtered);
+        }
+
+        function filterByStorage(val) {
+            if(val === 'all') {
+                initMasterTable(masterData);
+            } else {
+                const filtered = masterData.filter(item => item.storage === val);
+                initMasterTable(filtered);
+            }
+        }
+
+        // Add Selected Items to Transaction
+        function addSelectedItems() {
+            const checkboxes = document.querySelectorAll('#master-table-body input:checked');
+            checkboxes.forEach(cb => {
+                handleScan(cb.value);
+                cb.checked = false;
+            });
+        }
+
+        // Barcode Scanning Logic
+        document.addEventListener('keypress', e => {
+            // Ignore keypress if the user is typing in an input field or textarea
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            if (e.key === 'Enter') {
+                if(barcodeString.length > 2) handleScan(barcodeString.trim());
+                barcodeString = "";
+            } else {
+                barcodeString += e.key;
+            }
+        });
+
+        let checkoutList = [];
+        let currentScannedMedicine = null;
+
+        function closeScanModal() {
+            document.getElementById('scanResultModal').classList.remove('active');
+            document.getElementById('visible-barcode-input').focus();
+        }
+
+        function handleScan(code) {
+            const medicine = masterData.find(item => item.id === code);
+
+            if (!medicine) {
+                showNotice('ไม่พบรหัสยานี้ในระบบ: ' + code, 'warning');
+                return;
+            }
+
+            currentScannedMedicine = medicine;
+            
+            // Populate modal
+            document.getElementById('scan-id').innerText = medicine.id;
+            document.getElementById('scan-name').innerText = medicine.name;
+            document.getElementById('scan-unit').innerText = medicine.unit;
+            document.getElementById('scan-qty').value = 1;
+            document.getElementById('scan-storage').value = medicine.storage || 'อุณหภูมิห้อง';
+
+            // Show modal
+            document.getElementById('scanResultModal').classList.add('active');
+            
+            // Focus on quantity input
+            setTimeout(() => {
+                const qtyInput = document.getElementById('scan-qty');
+                qtyInput.focus();
+                qtyInput.select();
+                
+                // Allow Enter key to confirm
+                qtyInput.onkeypress = (e) => {
+                    if (e.key === 'Enter') confirmScanAdd();
+                };
+            }, 100);
+        }
+
+        function confirmScanAdd() {
+            if (!currentScannedMedicine) return;
+
+            const qty = parseInt(document.getElementById('scan-qty').value) || 1;
+            const storage = document.getElementById('scan-storage').value;
+            
+            // Check if already in list (with same storage)
+            const existing = checkoutList.find(item => item.id === currentScannedMedicine.id && item.storage === storage);
+            if(existing) {
+                existing.qty += qty;
+            } else {
+                checkoutList.push({...currentScannedMedicine, qty: qty, storage: storage});
+            }
+            
+            renderCheckoutTable();
+            closeScanModal();
+            showNotice('เพิ่ม ' + currentScannedMedicine.name + ' จำนวน ' + qty + ' ' + currentScannedMedicine.unit, 'success');
+        }
+
+        // History Functionality
+        const historyData = [];
+
+        function openHistoryModal() {
+            document.getElementById('historyModal').classList.add('active');
+            switchHistoryTab('receive');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        function switchHistoryTab(type) {
+            // Update Tab UI
+            const receiveTab = document.getElementById('tab-receive');
+            const dispenseTab = document.getElementById('tab-dispense');
+            
+            if(type === 'receive') {
+                receiveTab.className = "flex-1 py-3 px-4 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white transition-all";
+                dispenseTab.className = "flex-1 py-3 px-4 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:bg-gray-100 transition-all";
+            } else {
+                dispenseTab.className = "flex-1 py-3 px-4 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white transition-all";
+                receiveTab.className = "flex-1 py-3 px-4 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:bg-gray-100 transition-all";
+            }
+            
+            renderHistoryTable(type);
+        }
+
+        function renderHistoryTable(type) {
+            const tbody = document.getElementById('history-table-body');
+            const data = historyData[type] || [];
+            tbody.innerHTML = '';
+            
+            data.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3 text-center text-gray-400 font-mono">${index + 1}</td>
+                    <td class="p-3 text-gray-600">${item.date}</td>
+                    <td class="p-3 font-bold text-blue-900">${item.id}</td>
+                    <td class="p-3 text-gray-500 font-mono text-[11px]">${item.lot}</td>
+                    <td class="p-3 font-medium text-gray-700">${item.name}</td>
+                    <td class="p-3 text-right font-bold text-blue-600">${item.qty}</td>
+                    <td class="p-3 text-center text-gray-600">${item.user}</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-1 rounded-full text-[10px] font-bold ${type === 'receive' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">
+                            ${item.status}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            lucide.createIcons();
+        }
+
+        // Bill Search Functionality
+        const mockBills = [];
+
+        function openSearchBillModal() {
+            document.getElementById('searchBillModal').classList.add('active');
+            filterBillSearch();
+            setTimeout(() => document.getElementById('bill-search-input').focus(), 100);
+        }
+
+        function closeSearchBillModal() {
+            document.getElementById('searchBillModal').classList.remove('active');
+        }
+
+        function filterBillSearch() {
+            const query = document.getElementById('bill-search-input').value.toLowerCase();
+            const results = mockBills.filter(bill => 
+                bill.lot.toLowerCase().includes(query) || 
+                bill.name.toLowerCase().includes(query) ||
+                bill.id.toLowerCase().includes(query)
+            );
+            renderBillSearchResults(results);
+        }
+
+        function renderBillSearchResults(results) {
+            const tbody = document.getElementById('bill-search-results');
+            tbody.innerHTML = '';
+            
+            if (results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">ไม่พบรายการที่ตรงตามเงื่อนไข</td></tr>';
+                return;
+            }
+
+            results.forEach(bill => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-500 font-medium">${bill.date}</td>
+                    <td class="p-3 font-bold text-blue-900">${bill.id}</td>
+                    <td class="p-3 text-gray-600 font-mono text-[11px]">${bill.lot}</td>
+                    <td class="p-3 font-bold text-gray-700">${bill.name}</td>
+                    <td class="p-3 text-right">
+                        <span class="text-lg font-black ${bill.remaining <= 10 ? 'text-red-600' : 'text-blue-600'}">${bill.remaining}</span>
+                        <span class="text-[10px] text-gray-400 font-bold ml-1">ขวด</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button class="text-blue-600 hover:text-blue-800"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function renderCheckoutTable() {
+            const tbody = document.getElementById('checkout-table-body');
+            tbody.innerHTML = '';
+            
+            let totalItems = 0;
+
+            checkoutList.forEach((item, index) => {
+                totalItems += parseInt(item.qty);
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 border-b";
+                tr.innerHTML = `
+                    <td class="p-3 text-center border-r text-gray-400 font-bold">${index + 1}</td>
+                    <td class="p-3 text-center border-r font-bold text-blue-900">${item.id}</td>
+                    <td class="p-3 border-r font-bold text-gray-800">${item.name}</td>
+                    <td class="p-3 border-r text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.storage === 'ตู้เย็น' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">
+                            ${item.storage}
+                        </span>
+                    </td>
+                    <td class="p-3 border-r text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="changeQty('${item.id}', -1)" class="w-6 h-6 border rounded bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-600">-</button>
+                            <input type="number" value="" min="1" 
+                                class="w-16 border p-1 text-center rounded font-bold outline-none focus:border-blue-500"
+                                onchange="updateQty('${item.id}', this.value)">
+                            <button onclick="changeQty('${item.id}', 1)" class="w-6 h-6 border rounded bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-600">+</button>
+                        </div>
+                    </td>
+                    <td class="p-3 border-r text-center text-gray-500">${item.unit}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="removeItem('${item.id}')" class="text-red-400 hover:text-red-600 transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Fill empty rows for aesthetic
+            for(let i = checkoutList.length; i < 8; i++) {
+                const tr = document.createElement('tr');
+                tr.className = "h-11";
+                tr.innerHTML = '<td colspan="6" class="border-b border-gray-50"></td>';
+                tbody.appendChild(tr);
+            }
+
+            document.getElementById('total-items').innerText = totalItems;
+            lucide.createIcons();
+        }
+
+        function updateQty(id, val) {
+            const item = checkoutList.find(i => i.id === id);
+            if(item) {
+                item.qty = Math.max(1, parseInt(val) || 1);
+                // renderCheckoutTable\(.*?\); // Removed mock init
+            }
+        }
+
+        function changeQty(id, delta) {
+            const item = checkoutList.find(i => i.id === id);
+            if(item) {
+                item.qty = Math.max(1, (parseInt(item.qty) || 1) + delta);
+                // renderCheckoutTable\(.*?\); // Removed mock init
+            }
+        }
+
+        function removeItem(id) {
+            checkoutList = checkoutList.filter(i => i.id !== id);
+            // renderCheckoutTable\(.*?\); // Removed mock init
+            showNotice('ลบรายการเรียบร้อยแล้ว', 'info');
+        }
+
+        function removeItem(id) {
+            checkoutList = checkoutList.filter(i => i.id !== id);
+            // renderCheckoutTable\(.*?\); // Removed mock init
+        }
+
+        function showNotice(msg, type = 'success') {
+            const modal = document.getElementById('noticeModal');
+            const header = document.getElementById('noticeHeader');
+            const icon = document.getElementById('noticeIcon');
+            const title = document.getElementById('noticeTitle');
+            const message = document.getElementById('noticeMessage');
+
+            message.innerText = msg;
+            
+            if(type === 'success') {
+                header.className = 'p-4 bg-green-600 text-white flex items-center gap-3 shrink-0';
+                icon.setAttribute('data-lucide', 'check-circle');
+                title.innerText = 'สำเร็จ';
+            } else {
+                header.className = 'p-4 bg-orange-500 text-white flex items-center gap-3 shrink-0';
+                icon.setAttribute('data-lucide', 'alert-triangle');
+                title.innerText = 'คำเตือน';
+            }
+
+            lucide.createIcons({ root: modal });
+            modal.classList.add('active');
+        }
+
+        function closeNotice() {
+            document.getElementById('noticeModal').classList.remove('active');
+        }
+
+        // --- Stock Receive Module Logic ---
+        let srHistory = [
+            { date: "2026-04-25", inv: "INV-66001", name: "PACLITAXEL 100MG", qty: 20, status: "สำเร็จ", batch: "LOT-A12", expiry: "2026-06-15", conc: "6mg/ml", vol: "16.7ml" },
+            { date: "2026-04-24", inv: "INV-66002", name: "Endoxan 500mg", qty: 50, status: "สำเร็จ", batch: "LOT-B55", expiry: "2027-12-20", conc: "20mg/ml", vol: "25ml" }
+        ];
+
+        function openStockReceiveModal() {
+            const modal = document.getElementById('stockReceiveModal');
+            const select = document.getElementById('sr-drug-name');
+            
+            // Populate select if empty
+            if(select.options.length <= 1) {
+                masterData.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.innerText = item.name;
+                    select.appendChild(opt);
+                });
+            }
+            
+            modal.classList.add('active');
+            renderSRHistory();
+            lucide.createIcons({ root: modal });
+        }
+
+        function closeStockReceiveModal() {
+            document.getElementById('stockReceiveModal').classList.remove('active');
+        }
+
+        function updateSRCode() {
+            const id = document.getElementById('sr-drug-name').value;
+            document.getElementById('sr-pd-id').value = id;
+        }
+
+        function saveStockInbound() {
+            const nameSelect = document.getElementById('sr-drug-name');
+            const name = nameSelect.options[nameSelect.selectedIndex].text;
+            const batch = document.getElementById('sr-batch').value;
+            const expiry = document.getElementById('sr-expiry').value;
+            const qty = document.getElementById('sr-qty').value;
+            
+            if(!nameSelect.value || !batch || !expiry || !qty) {
+                showNotice("กรุณากรอกข้อมูลให้ครบทุกช่อง", "warning");
+                return;
+            }
+
+            const newItem = {
+                date: new Date().toISOString().split('T')[0],
+                inv: "INV-" + Math.floor(Math.random()*90000 + 10000),
+                name: name,
+                qty: parseInt(qty),
+                status: "สำเร็จ",
+                batch: batch,
+                expiry: expiry,
+                conc: document.getElementById('sr-conc').value + " mg/ml",
+                vol: document.getElementById('sr-vol').value + " ml"
+            };
+
+            srHistory.unshift(newItem);
+            renderSRHistory();
+            showNotice("บันทึกรับยาเข้าสต็อกเรียบร้อยแล้ว");
+            
+            // Clear form
+            document.getElementById('sr-batch').value = "";
+            document.getElementById('sr-expiry').value = "";
+            document.getElementById('sr-qty').value = "";
+        }
+
+        function renderSRHistory() {
+            const tbody = document.getElementById('sr-history-body');
+            tbody.innerHTML = '';
+            
+            const today = new Date();
+            const threeMonthsFromNow = new Date();
+            threeMonthsFromNow.setMonth(today.getMonth() + 3);
+
+            srHistory.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                
+                // Expiry Check
+                const expiryDate = new Date(item.expiry);
+                const isNearExpiry = expiryDate <= threeMonthsFromNow;
+
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-500 font-mono">${item.date}</td>
+                    <td class="p-3 font-bold text-blue-200">${item.name}</td>
+                    <td class="p-3 text-center text-white font-black">${item.qty}</td>
+                    <td class="p-3 text-center"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full text-[9px] font-black">SUCCESS</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="viewSRDetail(${index})" class="text-blue-400 hover:text-white transition">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons({ root: tbody });
+        }
+
+        function viewSRDetail(index) {
+            const item = srHistory[index];
+            const modal = document.getElementById('srDetailModal');
+            
+            document.getElementById('det-batch').innerText = item.batch;
+            
+            // Expiry with Neon Orange Warning
+            const expiryEl = document.getElementById('det-expiry');
+            expiryEl.innerText = item.expiry;
+            
+            const expiryDate = new Date(item.expiry);
+            const today = new Date();
+            const threeMonthsFromNow = new Date();
+            threeMonthsFromNow.setMonth(today.getMonth() + 3);
+            
+            if (expiryDate <= threeMonthsFromNow) {
+                expiryEl.className = "font-bold neon-orange";
+            } else {
+                expiryEl.className = "font-bold text-gray-300";
+            }
+
+            document.getElementById('det-conc').innerText = item.conc;
+            document.getElementById('det-vol').innerText = item.vol;
+            
+            modal.classList.add('active');
+            lucide.createIcons({ root: modal });
+        }
+
+        function closeSRDetail() {
+            document.getElementById('srDetailModal').classList.remove('active');
+        }
+
+        window.onload = () => { 
+            lucide.createIcons(); 
+            document.body.classList.add('ready');
+        };
+    </script>
 </body>
 </html>

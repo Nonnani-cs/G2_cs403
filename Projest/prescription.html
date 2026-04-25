@@ -5,274 +5,607 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>จ่ายยา - Chemotherapy Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
-        .active-link { background-color: #dbeafe; color: #2563eb; border-radius: 0.5rem; }
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow-y: auto; }
-        .modal-content { background-color: #f8fafc; margin: 2% auto; width: 90%; max-width: 1000px; border-radius: 1.5rem; position: relative; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f9; }
+        .office-header { background: linear-gradient(to right, #1e3a8a, #2563eb); }
+        .office-card { background: white; border-radius: 4px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .office-table thead { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; }
+        .office-table th, .office-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
+        
+        .active-link { background-color: #f1f5f9; color: #1e3a8a; font-weight: bold; border-left: 4px solid #1e3a8a !important; }
+        nav a, nav div { border-left: 4px solid transparent; border-radius: 8px; }
+        
+        .compact-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px; display: block; }
+        .pos-input-compact { border: 1px solid #cbd5e1; border-radius: 3px; padding: 4px 6px; font-size: 11px; width: 100%; outline: none; }
+        .pos-input-compact:focus { border-color: #3b82f6; background-color: #f8fafc; }
+        
+        .office-btn-primary { background-color: #2563eb; color: white; border-radius: 4px; padding: 0.5rem 1rem; font-weight: 500; transition: all 0.2s; }
+        .office-btn-primary:hover { background-color: #1d4ed8; }
+        .office-btn-secondary { background-color: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.5rem 1rem; font-weight: 500; transition: all 0.2s; }
+        
+        .lucide { width: 18px; height: 18px; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Smooth Modal System */
+        .modal-wrapper { 
+            position: fixed; inset: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(0px);
+            visibility: hidden; opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateZ(0);
+        }
+        .modal-wrapper.active { 
+            visibility: visible; opacity: 1; pointer-events: auto;
+            backdrop-filter: blur(4px);
+        }
+        .modal-card {
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-wrapper.active .modal-card {
+            transform: translateY(0);
+        }
+
+        /* Icon Flash Prevention */
+        [data-lucide] { visibility: hidden; }
+        .lucide { visibility: visible !important; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden text-gray-800">
+<body class="flex min-h-screen bg-[#f1f5f9]">
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r flex flex-col shrink-0 z-20 shadow-sm">
+    <aside class="w-64 bg-white border-r flex flex-col shrink-0 sticky top-0 h-screen overflow-y-auto z-20">
         <div class="p-6">
             <h1 class="text-blue-900 font-bold text-lg leading-tight">ระบบจัดการยาเคมีบำบัด</h1>
-            <p class="text-gray-400 text-xs">Chemotherapy Management</p>
+            <p class="text-gray-400 text-xs uppercase tracking-wider">Chemo Pharmacy</p>
         </div>
         <nav class="flex-1 px-4 space-y-2">
-            <a href="index.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">🏠</span><span>หน้าหลัก</span>
+            <a href="receive.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="clipboard-list" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">เบิก-รับยา</span>
             </a>
-            <a href="manage.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">📄</span><span>การจัดการข้อมูลยา</span>
+            <a href="manage.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="file-text" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">การจัดการข้อมูลยา</span>
             </a>
-            <a href="dispense.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">📋</span><span>จัดการใบสั่งยา</span>
-            </a>
-            <a href="receive.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">📦</span><span>เบิก-รับยา</span>
-            </a>
-            <a href="patients.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <span class="mr-3 text-xl">👥</span><span>จัดการรายชื่อผู้ป่วย</span>
+            <a href="dispense.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="file-edit" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการใบสั่งยา</span>
             </a>
             <div class="flex items-center p-3 active-link">
-                <span class="mr-3 text-xl">💊</span><span class="font-medium">จ่ายยา</span>
+                <i data-lucide="pill" class="mr-3 text-blue-900"></i>
+                <span class="text-sm font-bold">จ่ายยา</span>
             </div>
+            <a href="patients.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="users" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการรายชื่อผู้ป่วย</span>
+            </a>
+            <a href="status.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="search" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">ตรวจสอบสถานะยา</span>
+            </a>
+            <a href="report.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="bar-chart-2" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดพิมพ์รายงาน</span>
+            </a>
         </nav>
         <div class="p-4 border-t flex items-center bg-gray-50 mt-auto">
-            <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
-            <div><p class="text-sm font-medium text-gray-700">เภสัชกร สมมุติ</p><p class="text-xs text-gray-500">Admin</p></div>
+            <div class="w-10 h-10 bg-blue-100 rounded-full mr-3 border border-blue-200 flex items-center justify-center text-blue-600"><i data-lucide="user"></i></div>
+            <div><p class="text-sm font-bold text-gray-700">เภสัชกร สมชาย</p><p class="text-xs text-gray-500 uppercase">Pharmacist</p></div>
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-hidden bg-white">
-        <!-- Navigation Header -->
-        <header class="bg-white border-b px-8 py-4 flex justify-center space-x-8 text-lg shrink-0">
-            <a href="manage.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จัดการข้อมูลยา</a>
-            <a href="dispense.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">จัดการใบสั่งยา</a>
-            <a href="receive.html" class="text-gray-400 hover:text-gray-600 transition pt-0.5">เบิก-รับยา</a>
-            <button class="text-blue-900 font-bold border-b-2 border-blue-900 pb-1">จ่ายยา</button>
+    <main class="flex-1 flex flex-col bg-[#f1f5f9] min-w-0">
+        <header class="office-header text-white px-8 py-4 flex justify-between items-center shrink-0 shadow-lg z-10 sticky top-0">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i data-lucide="pill" class="w-6 h-6"></i></div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight leading-none">ระบบจ่ายยาและบันทึกข้อมูล</h1>
+                    <p class="text-[10px] text-blue-100 uppercase tracking-widest mt-1 opacity-80">Prescription & Dispensing</p>
+                </div>
+            </div>
         </header>
 
-        <!-- Top Tabs (WorldMedic style) -->
-        <div class="flex border-b-2 border-green-500 bg-green-100 p-2 pb-0">
-            <button class="flex-1 py-2 bg-green-500 font-bold text-white text-sm shadow-sm rounded-t-lg border-green-600 border">
-                จ่ายยา
-            </button>
-        </div>
-
-        <div class="flex-1 p-2 flex flex-col gap-2 overflow-hidden bg-[#fffff0] border-4 border-[#e0ebd0]">
-            <!-- Search Area (Like before) -->
-            <div class="bg-[#f8fdf4] border-b border-green-300 p-6 flex flex-col items-center">
-            <div class="w-full max-w-4xl space-y-4">
-                <div class="flex items-center space-x-4">
-                    <label class="font-bold text-sm w-32 text-right">ระบุคำค้นหา :</label>
-                    <div class="flex-1 flex border-2 border-red-500 bg-white">
-                        <input type="text" value="640304-123" class="flex-1 p-2 text-sm outline-none font-medium">
-                        <button class="px-4 text-gray-400 hover:text-gray-600 border-l">✕</button>
+        <div class="flex-1 p-4 flex gap-4 items-start">
+            
+            <!-- Left Side: Patient List -->
+            <div class="w-80 office-card flex flex-col rounded shadow-sm overflow-hidden bg-white shrink-0 sticky top-24 max-h-[calc(100vh-6rem)]">
+                <div class="p-3 bg-gray-50 border-b space-y-2">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">รายชื่อคนไข้ / Patient List</label>
+                        <span class="bg-blue-100 text-blue-700 text-[9px] px-1.5 py-0.5 rounded font-black">TODAY</span>
                     </div>
-                    <button class="bg-white border border-gray-300 px-8 py-2 text-sm font-bold shadow-sm hover:bg-gray-50">ค้นหาใบสั่งยา</button>
+                    <div class="relative">
+                        <input type="text" placeholder="ค้นหา HN หรือ ชื่อ..." class="w-full border p-2 pl-8 rounded text-xs outline-none focus:border-blue-500 shadow-sm">
+                        <i data-lucide="search" class="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400"></i>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <label class="font-medium text-sm w-32 text-right">ช่วงวันที่ใบสั่งยา :</label>
-                    <div class="flex space-x-2 items-center">
-                        <input type="date" class="border p-1 text-sm bg-white outline-none rounded">
-                        <span>ถึง</span>
-                        <input type="date" class="border p-1 text-sm bg-white outline-none rounded">
-                    </div>
+                <div class="flex-1 overflow-y-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-gray-100 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="border-b p-2 text-center w-20">HN</th>
+                                <th class="border-b p-2 text-left">ชื่อ-นามสกุล</th>
+                                <th class="border-b p-2 text-center w-12">Dvc</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patient-list-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- Updated Table Area -->
-        <div class="flex-1 overflow-auto">
-            <table class="w-full text-sm">
-                <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 sticky top-0 z-10">
-                    <tr>
-                        <th class="px-6 py-4 font-medium text-left">วันที่ใบสั่งยา</th>
-                        <th class="px-6 py-4 font-medium text-left">เลขที่ใบสั่งยา</th>
-                        <th class="px-6 py-4 font-medium text-left">ชื่อผู้ป่วย</th>
-                        <th class="px-6 py-4 font-medium text-center">จำนวนรายการยา</th>
-                        <th class="px-6 py-4 font-medium text-center">สถานะ</th>
-                        <th class="px-6 py-4 font-medium text-center">จัดการ</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr class="hover:bg-blue-50 transition-colors">
-                        <td class="px-6 py-5">04/03/2564</td>
-                        <td class="px-6 py-5 font-bold text-blue-700">640304-123</td>
-                        <td class="px-6 py-5">นายสมชาย ใจดี</td>
-                        <td class="px-6 py-5 text-center">1 รายการ</td>
-                        <td class="px-6 py-5 text-center">
-                            <span id="status-row-1" class="border border-orange-500 text-orange-600 px-4 py-1 rounded-full font-medium text-xs">รอจ่ายยา</span>
-                        </td>
-                        <td class="px-6 py-5 text-center">
-                            <button onclick="openDispenseDetail('Cisplatin', '66001234', 'นายสมชาย ใจดี')" class="bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-800 transition">จ่ายยา</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-blue-50 transition-colors">
-                        <td class="px-6 py-5">04/03/2564</td>
-                        <td class="px-6 py-5 font-bold text-blue-700">640304-124</td>
-                        <td class="px-6 py-5">นายสมศักดิ์ รักเรียน</td>
-                        <td class="px-6 py-5 text-center">1 รายการ</td>
-                        <td class="px-6 py-5 text-center">
-                            <span id="status-row-2" class="border border-orange-500 text-orange-600 px-4 py-1 rounded-full font-medium text-xs">รอจ่ายยา</span>
-                        </td>
-                        <td class="px-6 py-5 text-center">
-                            <button onclick="openDispenseDetail('WrongDrug', '66009999', 'นายสมศักดิ์ รักเรียน')" class="bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-800 transition">จ่ายยา</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-blue-50 transition-colors">
-                        <td class="px-6 py-5 text-gray-400">03/03/2564</td>
-                        <td class="px-6 py-5 text-gray-400 font-bold">640304-122</td>
-                        <td class="px-6 py-5 text-gray-400">นายขยัน เรียนดี</td>
-                        <td class="px-6 py-5 text-center text-gray-400">1 รายการ</td>
-                        <td class="px-6 py-5 text-center">
-                            <span class="border border-green-500 text-green-600 px-4 py-1 rounded-full font-medium text-xs">จ่ายยาแล้ว</span>
-                        </td>
-                        <td class="px-6 py-5 text-center">
-                            <button class="bg-gray-200 text-gray-500 px-6 py-2 rounded-lg font-bold cursor-not-allowed">จ่ายแล้ว</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+            <!-- Right Side: POS Workspace -->
+            <div class="w-2/3 flex flex-col gap-4 flex-1">
+                
+                <!-- Info Panels -->
+                <div class="flex gap-4 h-80 shrink-0">
+                    <!-- Prescription Info -->
+                    <div class="flex-1 office-card p-4 flex flex-col bg-white">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i data-lucide="user" class="text-blue-900 w-4 h-4"></i>
+                            <h3 class="text-xs font-bold text-blue-900 uppercase tracking-tight">ข้อมูลใบสั่งยา / Prescription Info</h3>
+                        </div>
+                        
+                        <div class="bg-blue-50 border border-blue-100 p-3 mb-3 rounded flex justify-between items-center shadow-inner">
+                            <div class="text-[10px] font-bold text-blue-800 uppercase tracking-widest">รหัส HN (HN Code)</div>
+                            <div class="text-xl font-black text-blue-900 tracking-tighter" id="bill-no">66001234</div>
+                        </div>
 
-        <!-- Footer -->
-        <div class="p-3 px-8 bg-gray-50 border-t text-sm text-gray-500 flex justify-between items-center">
-            <span>แสดงข้อมูลทดสอบ</span>
-            <span class="font-medium">จำนวน 2 รายการ</span>
-        </div>
-    </main>
+                        <div class="grid grid-cols-12 gap-x-3 gap-y-2">
+                            <div class="col-span-5">
+                                <label class="compact-label">รหัส HN</label>
+                                <input type="text" id="hn-input" class="pos-input-compact font-bold bg-gray-50 border-blue-200 text-blue-900" value="" readonly>
+                            </div>
+                            <div class="col-span-7">
+                                <label class="compact-label">ชื่อคนไข้ (Patient Name)</label>
+                                <input type="text" id="name-input" class="pos-input-compact font-bold bg-gray-50 border-blue-200 text-blue-900" value="" readonly>
+                            </div>
+                            <div class="col-span-12">
+                                <label class="compact-label">สถานะอุปกรณ์ (Dvc Status)</label>
+                                <input type="text" id="dvc-input" class="pos-input-compact font-bold text-green-600 bg-green-50 border-green-200" value="" readonly>
+                            </div>
+                            <div class="col-span-12">
+                                <label class="compact-label">วิธีการให้ยา</label>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2 bg-gray-50 p-2 rounded border border-gray-200 mt-1">
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-3.5 h-3.5 accent-blue-600"> <span class="text-[11px] font-bold text-gray-700">ยาฉีดเข้า IV</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 accent-blue-600"> <span class="text-[11px] font-bold text-gray-700">ยาฉีดเข้าใต้ผิวหนัง (SC)</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 accent-blue-600"> <span class="text-[11px] font-bold text-gray-700">ยาฉีดเข้าทางกล้ามเนื้อ (IM)</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 accent-blue-600"> <span class="text-[11px] font-bold text-gray-700">ยาฉีดเข้าทางไขสันหลัง (IT)</span></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    <!-- Modal: Dispense Detail (Reused from previous turn) -->
-    <div id="dispenseModal" class="modal">
-        <div class="modal-content shadow-2xl p-0 overflow-hidden">
-            <!-- Modal Header -->
-            <div class="bg-white p-6 border-b flex justify-between items-center sticky top-0 z-20">
-                <h2 class="text-xl font-bold text-blue-900">รายละเอียดการจ่ายยา</h2>
-                <button onclick="closeDispenseDetail()" class="text-gray-400 hover:text-gray-900 text-2xl">✕</button>
-            </div>
+                    <!-- Drug Entry -->
+                    <div class="flex-1 office-card p-4 flex flex-col bg-slate-50 border-blue-100">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i data-lucide="beaker" class="text-blue-900 w-4 h-4"></i>
+                            <h3 class="text-xs font-bold text-blue-900 uppercase tracking-tight">บันทึกรายการยา / Drug Entry</h3>
+                        </div>
 
-            <div class="p-8 space-y-6">
-                <!-- Patient Banner -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex justify-between items-center">
-                    <div class="flex space-x-12">
-                        <div><p class="text-gray-400 text-xs font-bold uppercase mb-1">HN</p><p id="modal-hn" class="text-xl font-bold">66001234</p></div>
-                        <div><p class="text-gray-400 text-xs font-bold uppercase mb-1">ชื่อผู้ป่วย</p><p id="modal-patient-name" class="text-xl font-bold">นายสมชาย ใจดี</p></div>
-                        <div><p class="text-gray-400 text-xs font-bold uppercase mb-1">แพทย์ผู้สั่ง</p><p class="text-xl font-bold">นพ.สมชาย ใจดี</p></div>
+                        <div class="grid grid-cols-12 gap-3">
+                            <div class="col-span-4">
+                                <label class="compact-label">Lot No</label>
+                                <input type="text" id="pcode" class="pos-input-compact font-bold bg-white" value="">
+                            </div>
+                            <div class="col-span-8">
+                                <label class="compact-label">ชื่อทางการค้า (Trade Name)</label>
+                                <input type="hidden" id="qty-input" value="">
+                                <input type="text" id="trade-name" class="pos-input-compact font-bold bg-white" value="">
+                            </div>
+                            <div class="col-span-12 mt-2 pt-3 border-t border-blue-100 flex flex-col gap-4 items-end">
+                                <div class="flex gap-2 w-full justify-end">
+                                    <button onclick="autoFillFromPrescription()" class="bg-orange-500 text-white px-4 py-2 rounded font-bold text-xs shadow-md hover:bg-orange-600 transition flex items-center gap-2">
+                                        <i data-lucide="copy" class="w-3 h-3"></i> ดึงรายการทั้งหมด
+                                    </button>
+                                    <button onclick="addItem()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-xs shadow-md hover:bg-blue-700 transition flex items-center gap-2">
+                                        <i data-lucide="plus" class="w-3 h-3"></i> เพิ่มรายการ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Drug Items -->
-                <div class="space-y-6">
-                    <div class="bg-[#f8fdf4] rounded-2xl border border-green-300 p-8 shadow-sm">
-                        <div class="flex justify-between items-start mb-4">
+                <!-- Transaction Table -->
+                <div class="office-card flex flex-col bg-white shadow-md">
+                    <div class="bg-blue-600 text-white px-4 py-2 flex justify-between items-center shrink-0">
+                        <div class="flex items-center gap-4">
+                            <h3 class="text-[10px] font-bold uppercase tracking-widest">รายการที่แพทย์สั่ง / Doctor's Orders</h3>
+                            <div id="rx-status-tag" class="bg-white/20 px-2 py-0.5 rounded text-[9px] font-bold">LOADING...</div>
+                        </div>
+                    </div>
+                    <div class="h-32 overflow-auto bg-blue-50/30 border-b">
+                        <table class="w-full text-[11px]">
+                            <thead class="bg-white/50 text-blue-900 sticky top-0">
+                                <tr>
+                                    <th class="p-2 text-left w-24">รหัสยา</th>
+                                    <th class="p-2 text-left">ชื่อยาที่แพทย์สั่ง</th>
+                                    <th class="p-2 text-center w-20">จำนวน</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prescription-body" class="divide-y divide-blue-100"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="bg-green-600 text-white px-4 py-2 flex justify-between items-center shrink-0">
+                        <h3 class="text-[10px] font-bold uppercase tracking-widest">รายการที่จะจ่ายจริง / Actual Dispensing</h3>
+                        <div class="text-[10px] font-bold">SCAN READY <i data-lucide="scan" class="inline w-3 h-3 ml-1 text-white"></i></div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[12px] border-collapse">
+                            <thead class="bg-gray-100 sticky top-0 z-10 text-gray-600">
+                                <tr>
+                                    <th class="border-b p-3 text-center w-12">ลำดับ</th>
+                                    <th class="border-b p-3 text-left w-48">รายการยา (Drug Name + PD-ID)</th>
+
+                                    <th class="border-b p-3 text-center border-r">จำนวนยาที่จ่าย</th>
+                                    <th class="border-b p-3 text-center border-r">จำนวนเต็ม (mg)</th>
+                                    <th class="border-b p-3 text-center border-r">ขนาดยาที่ใช้ (ml)</th>
+                                    <th class="border-b p-3 text-center">เหลือเท่าไหร่ (ml)</th>
+                                    <th class="border-b p-3 text-center w-12"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="dispense-items-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Actions & Summary -->
+                    <div class="bg-blue-50 px-4 py-2 border-t border-blue-100 flex justify-between items-center shrink-0">
+                        <div class="flex gap-6">
                             <div>
-                                <div class="flex items-center space-x-3 mb-2">
-                                    <h3 id="modal-drug-name" class="text-2xl font-bold text-gray-800">Cisplatin</h3>
-                                    <span class="bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-full">⚠️ HIGH ALERT</span>
-                                </div>
-                                <p id="modal-dose" class="text-gray-500 text-lg">ขนาดที่สั่ง: 50 mg | จำนวน: 1 ขวด</p>
+                                <span class="text-[9px] font-bold uppercase text-gray-500">รวมจำนวนรายการ</span>
+                                <div class="text-base font-black text-blue-900 tracking-tighter"><span id="item-count">0</span> รายการ</div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-6 mt-6">
-                            <div class="space-y-4">
-                                <div><label class="block font-bold mb-1 text-gray-700">Lot Number</label><input type="text" class="w-full border border-green-300 rounded-xl p-3 bg-[#fdfdf0] outline-none" placeholder="ระบุ Lot Number"></div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div><label class="block font-bold mb-1 text-gray-700">จำนวนที่จ่าย</label><input type="number" step="0.5" class="w-full border border-green-300 rounded-xl p-3 bg-[#fdfdf0] outline-none focus:ring-2 focus:ring-green-400" value="1"></div>
-                                    <div><label class="block font-bold mb-1 text-gray-700">หน่วย</label><input type="text" class="w-full border border-green-300 rounded-xl p-3 bg-[#fdfdf0] outline-none" value="ขวด" readonly></div>
-                                </div>
-                            </div>
-                            <div class="space-y-4">
-                                <div><label class="block font-bold mb-1 text-gray-700">วันหมดอายุ</label><input type="date" class="w-full border border-green-300 rounded-xl p-3 bg-[#fdfdf0] outline-none"></div>
-                                <div><label class="block font-bold mb-1 text-gray-700">หมายเหตุ</label><textarea class="w-full border border-green-300 rounded-xl p-3 bg-[#fdfdf0] outline-none h-24 resize-none" placeholder="ระบุหมายเหตุ..."></textarea></div>
-                            </div>
+                        <div class="flex gap-2">
+                            <button onclick="location.reload()" class="bg-white border border-red-100 text-red-600 px-4 py-1.5 rounded text-[11px] font-bold hover:bg-red-50 transition shadow-sm">ล้างข้อมูล</button>
+                            <button id="save-btn" onclick="saveDispensing()" class="bg-green-600 text-white px-6 py-1.5 rounded shadow-md text-[11px] font-bold hover:bg-green-700 transition flex items-center gap-1.5">
+                                <i data-lucide="save" class="w-4 h-4"></i> บันทึกการจ่ายยา
+                            </button>
                         </div>
                     </div>
                 </div>
-
-                <!-- Action Buttons -->
-                <div class="flex justify-end space-x-4 pt-4">
-                    <button onclick="closeDispenseDetail()" class="bg-white border px-10 py-3 rounded-xl font-bold text-lg">ยกเลิก</button>
-                    <button onclick="confirmDispenseSuccess()" class="bg-black text-white px-10 py-3 rounded-xl font-bold text-lg">ยืนยันการจ่ายยา</button>
-                </div>
+            </div>
+        </div>
+    <!-- Notice Modal -->
+    <div id="noticeModal" class="modal-wrapper">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden modal-card flex flex-col">
+            <div id="noticeHeader" class="p-4 text-white flex items-center gap-3 shrink-0">
+                <i id="noticeIcon" data-lucide="info" class="w-6 h-6"></i>
+                <h3 id="noticeTitle" class="font-bold">คำแนะนำ</h3>
+            </div>
+            <div class="p-6 text-center">
+                <p id="noticeMessage" class="text-sm text-gray-700 font-medium"></p>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-center">
+                <button onclick="closeNotice()" class="office-btn-primary px-10">ตกลง</button>
             </div>
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div id="successModal" class="modal flex items-center justify-center" style="z-index: 200;">
-        <div class="bg-white rounded-3xl p-10 max-w-sm w-full mx-4 shadow-2xl text-center">
-            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">✓</div>
-            <h3 class="text-2xl font-bold mb-2">จ่ายยาสำเร็จ</h3>
-            <p class="text-gray-500 mb-8">บันทึกข้อมูลการจ่ายยาเรียบร้อยแล้ว</p>
-            <button onclick="closeAllModals()" class="w-full bg-black text-white py-4 rounded-2xl font-bold text-lg">ตกลง</button>
-        </div>
-    </div>
-
-    <!-- Error Modal (Name Mismatch) -->
-    <div id="errorModal" class="modal flex items-center justify-center" style="z-index: 200;">
-        <div class="bg-white rounded-3xl p-10 max-w-sm w-full mx-4 shadow-2xl text-center border-t-8 border-red-500">
-            <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">✕</div>
-            <h3 class="text-2xl font-bold mb-2 text-red-600">จ่ายยาไม่สำเร็จ</h3>
-            <p class="text-gray-600 mb-8 font-medium">ไม่สามารถจ่ายยาได้เนื่องจากชื่อยาไม่ตรงกับใบสั่งยา กรุณาลองใหม่</p>
-            <button onclick="closeErrorModal()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-red-700 transition">ตกลง</button>
+    <!-- Confirm Modal -->
+    <div id="confirmModal" class="modal-wrapper">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden modal-card flex flex-col">
+            <div class="bg-blue-900 p-4 text-white flex items-center gap-3 shrink-0">
+                <i data-lucide="help-circle" class="w-6 h-6"></i>
+                <h3 class="font-bold">ยืนยันการทำรายการ</h3>
+            </div>
+            <div class="p-6 text-center">
+                <p id="confirmMessage" class="text-sm text-gray-700 font-medium"></p>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-center gap-3">
+                <button onclick="closeConfirm()" class="office-btn-secondary px-8">ยกเลิก</button>
+                <button id="confirmBtn" class="bg-green-600 text-white px-10 py-2 rounded font-bold hover:bg-green-700 transition">ยืนยันการบันทึก</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let selectedDrug = "";
-        let selectedPatientId = "";
+        // Mock Doctor's Orders for Validation
+        const doctorOrders = {
+            '66001234': [
+                { code: 'PD-00008', name: 'Endoxan 500mg', qty: 1 },
+                { code: 'PD-00009', name: 'Adriamycin 50mg', qty: 2 }
+            ],
+            '66005678': [
+                { code: 'PD-00007', name: 'Cisplatin 50mg', qty: 1 }
+            ],
+            '66009999': [
+                { code: 'PD-00010', name: 'Taxol 100mg', qty: 1 }
+            ]
+        };
 
-        function openDispenseDetail(drug, hn, name) {
-            selectedDrug = drug;
-            selectedPatientId = hn;
-            
-            // Update Modal Content
-            document.getElementById('modal-hn').innerText = hn;
-            document.getElementById('modal-patient-name').innerText = name;
-            document.getElementById('modal-drug-name').innerText = (drug === 'WrongDrug' ? 'Methotrexate 50mg' : drug);
-            document.getElementById('modal-dose').innerText = (drug === 'WrongDrug' ? 'ขนาดที่สั่ง: 50 mg | จำนวน: 1 แผง' : 'ขนาดที่สั่ง: 50 mg | จำนวน: 1 ขวด');
-            
-            document.getElementById('dispenseModal').style.display = 'block';
-        }
+        const patientList = [
+            { hn: '66001234', name: 'นายสมชาย ใจดี', dvc: 'Dvc-01' },
+            { hn: '66005678', name: 'นางสมหญิง แสงดี', dvc: 'Dvc-02' },
+            { hn: '66009999', name: 'น.ส.ใจใส มีสุข', dvc: 'Dvc-01' }
+        ];
 
-        function closeDispenseDetail() {
-            document.getElementById('dispenseModal').style.display = 'none';
-        }
+        let sampleItems = [];
+        let currentHN = '';
 
-        function confirmDispenseSuccess() {
-            if (selectedDrug === 'WrongDrug') {
-                document.getElementById('errorModal').style.display = 'flex';
+        function selectPatient(event, hn, name, dvc) {
+            if (event) {
+                document.querySelectorAll('#patient-list-body tr').forEach(el => el.classList.remove('bg-blue-50', 'bg-blue-50/50'));
+                const row = event.currentTarget;
+                row.classList.add('bg-blue-50');
             } else {
-                document.getElementById('successModal').style.display = 'flex';
-                // Update table status (for Row 1 in this demo)
-                const statusBadge = document.getElementById('status-row-1');
-                if (statusBadge) {
-                    statusBadge.innerText = 'จ่ายยาแล้ว';
-                    statusBadge.className = 'border border-green-500 text-green-600 px-4 py-1 rounded-full font-medium text-xs';
+                // For auto-selection from URL
+                document.querySelectorAll('#patient-list-body tr').forEach(row => {
+                    if (row.innerText.includes(hn)) {
+                        row.classList.add('bg-blue-50');
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }
+            
+            currentHN = hn;
+            document.getElementById('hn-input').value = hn;
+            if(document.getElementById('bill-no')) document.getElementById('bill-no').innerText = hn;
+            document.getElementById('name-input').value = name;
+            document.getElementById('dvc-input').value = dvc === 'Dvc-01' ? 'Dvc-01: Connected / Active' : 'Dvc-02: Pending / Idle';
+            document.getElementById('dvc-input').className = dvc === 'Dvc-01' ? 
+                'pos-input-compact font-bold text-green-600 bg-green-50 border-green-200' : 
+                'pos-input-compact font-bold text-orange-600 bg-orange-50 border-orange-200';
+            
+            sampleItems = [];
+            renderPrescription();
+            renderDispenseTable();
+            resetSaveButton();
+            
+            // Auto-populate first item inputs
+            const orders = doctorOrders[hn] || [];
+            if (orders.length > 0) {
+                document.getElementById('pcode').value = orders[0].code;
+                document.getElementById('trade-name').value = orders[0].name;
+                document.getElementById('qty-input').value = orders[0].qty;
+            } else {
+                document.getElementById('pcode').value = '';
+                document.getElementById('trade-name').value = '';
+                document.getElementById('qty-input').value = 1;
+            }
+        }
+
+        function renderPrescription() {
+            const body = document.getElementById('prescription-body');
+            const tag = document.getElementById('rx-status-tag');
+            body.innerHTML = '';
+            
+            const orders = doctorOrders[currentHN] || [];
+            if (orders.length === 0) {
+                tag.innerText = 'NO ORDER';
+                tag.className = 'bg-red-500 text-white px-2 py-0.5 rounded text-[9px] font-bold';
+            } else {
+                tag.innerText = 'ACTIVE ORDER';
+                tag.className = 'bg-green-500 text-white px-2 py-0.5 rounded text-[9px] font-bold';
+                
+                orders.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 font-bold text-blue-900">${item.code}</td>
+                        <td class="p-2 font-medium text-gray-700">${item.name}</td>
+                        <td class="p-2 text-center font-black">${item.qty} ml</td>
+                    `;
+                    body.appendChild(tr);
+                });
+            }
+        }
+
+        function addItem() {
+            const code = document.getElementById('pcode').value;
+            const name = document.getElementById('trade-name').value;
+            const qty = parseInt(document.getElementById('qty-input').value);
+            
+            if(!code || !name || isNaN(qty)) return;
+
+            sampleItems.push({ code, name, qty, unit: 'ml' });
+            renderDispenseTable();
+        }
+
+        function removeItem(index) {
+            sampleItems.splice(index, 1);
+            renderDispenseTable();
+        }
+
+        function renderDispenseTable() {
+            const body = document.getElementById('dispense-items-body');
+            body.innerHTML = '';
+
+            sampleItems.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 border-b";
+                tr.innerHTML = `
+                    <td class="p-2 text-center border-r text-gray-400 font-bold">${index + 1}</td>
+                    <td class="p-2 border-r">
+                        <input type="text" value="" class="w-full text-[11px] font-bold p-1 border rounded outline-none focus:border-blue-500 bg-gray-50/50">
+                        <div class="text-[9px] text-gray-400 font-mono mt-0.5">${item.code || ''}</div>
+                    </td>
+
+                    <td class="p-2 border-r">
+                        <input type="text" value="" placeholder="จำนวนขวด" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center">
+                    </td>
+                    <td class="p-2 border-r">
+                        <input type="text" value="" placeholder="เช่น 594(เศษ 154 + ใหม่ 440)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500">
+                    </td>
+                    <td class="p-2 border-r">
+                        <input type="text" value="" placeholder="Dose (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-blue-900">
+                    </td>
+                    <td class="p-2 border-r">
+                        <input type="text" value="" placeholder="คงเหลือ (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-green-700">
+                    </td>
+                    <td class="p-2 text-center">
+                        <button onclick="removeItem(${index})" class="text-red-400 hover:text-red-600 transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+            
+            document.getElementById('item-count').innerText = sampleItems.length;
+            
+            // Add empty rows
+            for(let i = sampleItems.length; i < 10; i++) {
+                const tr = document.createElement('tr');
+                tr.className = "h-11";
+                tr.innerHTML = '<td colspan="7" class="border-b border-gray-50"></td>';
+                body.appendChild(tr);
+            }
+            lucide.createIcons({ root: body });
+        }
+
+        function showNotice(msg, type = 'success') {
+            const modal = document.getElementById('noticeModal');
+            const header = document.getElementById('noticeHeader');
+            const icon = document.getElementById('noticeIcon');
+            const title = document.getElementById('noticeTitle');
+            const message = document.getElementById('noticeMessage');
+
+            message.innerText = msg;
+            
+            if(type === 'success') {
+                header.className = 'p-4 bg-green-600 text-white flex items-center gap-3 shrink-0';
+                icon.setAttribute('data-lucide', 'check-circle');
+                title.innerText = 'สำเร็จ';
+            } else {
+                header.className = 'p-4 bg-orange-500 text-white flex items-center gap-3 shrink-0';
+                icon.setAttribute('data-lucide', 'alert-triangle');
+                title.innerText = 'คำเตือน';
+            }
+
+            lucide.createIcons({ root: modal });
+            modal.classList.add('active');
+        }
+
+        function closeNotice() {
+            document.getElementById('noticeModal').classList.remove('active');
+        }
+
+        function showConfirm(msg, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            document.getElementById('confirmMessage').innerText = msg;
+            const btn = document.getElementById('confirmBtn');
+            btn.onclick = () => {
+                onConfirm();
+                closeConfirm();
+            };
+            lucide.createIcons({ root: modal });
+            modal.classList.add('active');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmModal').classList.remove('active');
+        }
+
+        function saveDispensing() {
+            if (sampleItems.length === 0) {
+                showNotice('กรุณาเพิ่มรายการยาลงในตารางจ่ายจริงก่อนทำการบันทึก (หรือกดปุ่มดึงรายการทั้งหมด)', 'warning');
+                return;
+            }
+
+            // --- Clinical Safety Validation ---
+            const orders = doctorOrders[currentHN] || [];
+            let isMismatch = false;
+            let errorMsg = "";
+
+            // Check if all items in Dispensing exist in Prescription
+            for (let item of sampleItems) {
+                const match = orders.find(o => o.code === item.code || o.name === item.name);
+                if (!match) {
+                    isMismatch = true;
+                    errorMsg = `⚠️ ตัวยา [${item.name}] ไม่ตรงกับที่แพทย์สั่ง ห้ามจ่ายเด็ดขาด!`;
+                    break;
+                }
+                if (item.qty > match.qty) {
+                    isMismatch = true;
+                    errorMsg = `⚠️ จำนวนยา [${item.name}] เกินกว่าที่แพทย์สั่ง (${item.qty} > ${match.qty}) ห้ามจ่าย!`;
+                    break;
                 }
             }
-        }
 
-        function closeErrorModal() {
-            document.getElementById('errorModal').style.display = 'none';
-        }
-
-        function closeAllModals() {
-            document.getElementById('successModal').style.display = 'none';
-            document.getElementById('dispenseModal').style.display = 'none';
-        }
-
-        window.onclick = function(event) {
-            if (event.target.className === 'modal') {
-                closeDispenseDetail();
+            if (isMismatch) {
+                showNotice(errorMsg, 'error');
+                disableSaveButton();
+                return;
             }
+
+            showConfirm('คุณต้องการบันทึกการจ่ายยาใช่หรือไม่? (ตรวจสอบรายการยาถูกต้องตรงตามใบสั่งแพทย์)', () => {
+                showNotice('บันทึกการจ่ายยาเรียบร้อยแล้ว');
+                disableSaveButton(); // Prevent double click
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            });
         }
+
+        function disableSaveButton() {
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true;
+            btn.className = "bg-gray-400 text-white px-10 py-2 rounded shadow-none font-bold cursor-not-allowed flex items-center gap-2";
+        }
+
+        function resetSaveButton() {
+            const btn = document.getElementById('save-btn');
+            btn.disabled = false;
+            btn.className = "bg-green-600 text-white px-10 py-2 rounded shadow-xl font-bold hover:bg-green-700 transition flex items-center gap-2";
+        }
+
+        function autoFillFromPrescription() {
+            const orders = doctorOrders[currentHN] || [];
+            if (orders.length === 0) {
+                showNotice('ไม่พบรายการยาที่แพทย์สั่งสำหรับคนไข้รายนี้', 'warning');
+                return;
+            }
+            
+            sampleItems = orders.map(o => ({ ...o, unit: 'ml' }));
+            renderDispenseTable();
+            resetSaveButton();
+            showNotice(`ดึงรายการยาจำนวน ${orders.length} รายการ เรียบร้อยแล้ว`, 'success');
+        }
+
+        window.onload = () => { lucide.createIcons(); };));
+
+                // 3. Update Doctor Orders Mock (to pass safety validation)
+                if (!doctorOrders[currentHN]) {
+                    doctorOrders[currentHN] = sampleItems.map(i => ({ ...i }));
+                }
+
+                showNotice(`🔵 เชื่อมต่อใบสั่งยา [${payload.orderNo}] สำเร็จ (นำเข้าข้อมูลคำนวณเรียบร้อย)`, 'success');
+                
+                // Clear payload so it doesn't persist on manual refresh
+                localStorage.removeItem('currentDispense');
+            } else {
+                // Normal loading via URL Parameters or Default
+                const urlParams = new URLSearchParams(window.location.search);
+                const hnFromUrl = urlParams.get('hn');
+
+                if (hnFromUrl) {
+                    const p = patientList.find(x => x.hn === hnFromUrl);
+                    if (p) {
+                        currentHN = p.hn;
+                        document.getElementById('hn-input').value = p.hn;
+                        document.getElementById('name-input').value = p.name;
+                    }
+                } else {
+                    const p = patientList[0];
+                    currentHN = p.hn;
+                    document.getElementById('hn-input').value = p.hn;
+                    document.getElementById('name-input').value = p.name;
+                }
+            }
+
+            renderPrescription();
+            renderDispenseTable();
+            lucide.createIcons({ root: document.body });
+        };
     </script>
 </body>
 </html>
