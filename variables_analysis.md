@@ -12,6 +12,7 @@
 | `medicineModal` | ID | ใช้ระบุ Element ของหน้าต่างป๊อปอัพ (Modal) เพิ่มยาใหม่ | 14 |
 | `openModal` | Function | ทำหน้าที่แสดง Modal เพิ่มยาใหม่ โดยการลบ class `hidden` | 684 |
 | `closeModal` | Function | ทำหน้าที่ซ่อน Modal เพิ่มยาใหม่ โดยการเพิ่ม class `hidden` | 688 |
+
 | `window.onclick` | Event | ตรวจจับการคลิกบนหน้าจอ เพื่อปิด Modal เมื่อคลิกพื้นที่ด้านนอก | 693 |
 | `modal` | Local Var | เก็บ Element ของ `medicineModal` เพื่อตรวจสอบเป้าหมายการคลิก | 694 |
 | `switchTab` | Function | ใช้สำหรับเปลี่ยนหน้าจอข้อมูล (Tab) เช่น ข้อมูลทั่วไป, รายละเอียดเพิ่มเติม | 700 |
