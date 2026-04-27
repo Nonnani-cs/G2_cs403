@@ -7,6 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Session Check
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        }
+    </script>
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f9; opacity: 0; transition: opacity 0.4s ease-in-out; }
         body.ready { opacity: 1; }
@@ -16,8 +23,8 @@
         .office-table th, .office-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
         .office-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.5rem; font-size: 0.875rem; transition: all 0.2s; }
         .office-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px #dbeafe; outline: none; }
-        .active-link { background-color: #f1f5f9; color: #1e3a8a; font-weight: bold; border-left: 4px solid #1e3a8a !important; }
-        nav a, nav div { border-left: 4px solid transparent; border-radius: 8px; }
+        .active-link { background-color: #eff6ff; color: #1e3a8a; font-weight: 700; border-left: 4px solid #1e3a8a !important; }
+        nav a, nav div { border-left: 4px solid transparent; border-radius: 8px; transition: all 0.2s; }
         .lucide { width: 18px; height: 18px; }
         
         /* Scrollbar styles for office look */
@@ -31,46 +38,59 @@
         .lucide { visibility: visible !important; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="flex h-screen overflow-hidden text-base">
 
-    <aside class="w-64 bg-white border-r flex flex-col shrink-0">
+    <aside class="w-64 bg-white border-r flex flex-col shrink-0 sticky top-0 h-screen overflow-y-auto z-20">
         <div class="p-6">
             <h1 class="text-blue-900 font-bold text-lg leading-tight">ระบบจัดการยาเคมีบำบัด</h1>
-            <p class="text-gray-400 text-xs uppercase tracking-wider">Chemo Pharmacy</p>
+            <p class="text-gray-400 text-xs uppercase tracking-wider">CHEMO PHARMACY</p>
         </div>
         <nav class="flex-1 px-4 space-y-2">
             <a href="receive.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
-                <i data-lucide="clipboard-list" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <i data-lucide="clipboard-list" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
                 <span class="text-sm font-medium">เบิก-รับยา</span>
             </a>
             <a href="manage.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
-                <i data-lucide="file-text" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <i data-lucide="file-text" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
                 <span class="text-sm font-medium">การจัดการข้อมูลยา</span>
             </a>
             <a href="dispense.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
-                <i data-lucide="file-edit" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <i data-lucide="file-edit" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
                 <span class="text-sm font-medium">จัดการใบสั่งยา</span>
             </a>
             <a href="prescription.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
-                <i data-lucide="pill" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <i data-lucide="pill" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
                 <span class="text-sm font-medium">จ่ายยา</span>
             </a>
             <a href="patients.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
-                <i data-lucide="users" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <i data-lucide="users" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
                 <span class="text-sm font-medium">จัดการรายชื่อผู้ป่วย</span>
             </a>
             <div class="flex items-center p-3 active-link">
-                <i data-lucide="search" class="mr-3 text-blue-900"></i>
+                <i data-lucide="search" class="w-5 h-5 flex-shrink-0 mr-3 text-blue-900"></i>
                 <span class="text-sm font-bold">ตรวจสอบสถานะยา</span>
             </div>
             <a href="report.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
-                <i data-lucide="bar-chart-2" class="mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <i data-lucide="bar-chart-2" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
                 <span class="text-sm font-medium">จัดพิมพ์รายงาน</span>
             </a>
+            <a href="users.html" id="nav-users" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group hidden">
+                <i data-lucide="users-2" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการผู้ใช้งาน</span>
+            </a>
         </nav>
-        <div class="p-4 border-t flex items-center bg-gray-50 mt-auto">
-            <div class="w-10 h-10 bg-blue-100 rounded-full mr-3 border border-blue-200 flex items-center justify-center text-blue-600"><i data-lucide="user"></i></div>
-            <div><p class="text-sm font-bold text-gray-700">เภสัชกร สมมุติ</p><p class="text-xs text-gray-500 uppercase">Pharmacist</p></div>
+        <div onclick="checkSupervisor()" class="p-4 border-t flex items-center bg-gray-50 mt-auto cursor-pointer hover:bg-blue-50 transition-colors group">
+            <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=2563eb&color=fff" class="w-10 h-10 rounded-full mr-3 border border-gray-200 shadow-sm group-hover:scale-105 transition-transform">
+            <div class="flex-1 min-w-0">
+                <p id="user-fullname" class="text-sm font-bold text-gray-700 truncate">...</p>
+                <div class="flex items-center gap-1">
+                    <p id="user-role" class="text-xs text-gray-500 uppercase font-bold">...</p>
+                    <i id="override-icon" data-lucide="lock" class="w-2.5 h-2.5 text-gray-400 hidden"></i>
+                </div>
+            </div>
+            <button onclick="event.stopPropagation(); logout()" class="text-gray-400 hover:text-red-500 transition ml-2">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
         </div>
     </aside>
 
@@ -108,8 +128,8 @@
                         <div>
                             <label class="text-[10px] font-bold text-gray-500 uppercase">ค้นหา (Search)</label>
                             <div class="relative mt-1">
-                                <input type="text" id="searchInput" oninput="applyFilters()" placeholder="ชื่อยา, รหัส, Lot..." class="office-input w-full p-1.5 pl-7 text-[11px] bg-white focus:ring-1 focus:ring-blue-500">
-                                <i data-lucide="search" class="absolute left-2 top-2 text-gray-400 w-3 h-3"></i>
+                                <input type="text" id="searchInput" oninput="applyFilters()" placeholder="ชื่อยา, รหัส, Lot..." class="office-input w-full p-1.5 pr-7 text-[11px] bg-white focus:ring-1 focus:ring-blue-500">
+                                <i data-lucide="search" class="absolute right-2 top-2 text-gray-400 w-3 h-3"></i>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-2">
@@ -242,9 +262,31 @@
             applyFilters();
         }
 
-        window.onload = () => { 
-            lucide.createIcons(); 
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+            
+            if (currentUser) {
+                const fullNameEl = document.getElementById('user-fullname');
+                const roleEl = document.getElementById('user-role');
+                const avatarEl = document.getElementById('user-avatar');
+                const navUsers = document.getElementById('nav-users');
+
+                if (fullNameEl) fullNameEl.textContent = currentUser.fullname;
+                if (roleEl) roleEl.textContent = currentUser.role;
+                if (avatarEl) avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.fullname)}&background=2563eb&color=fff`;
+
+                if (currentUser.role === 'Senior Pharmacist') {
+                    if (navUsers) navUsers.classList.remove('hidden');
+                }
+            }
+
             document.body.classList.add("ready"); 
+            renderInventoryTable();
         };
     </script>
 </body>
