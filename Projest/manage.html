@@ -748,7 +748,7 @@
                             <i data-lucide="trash-2" class="w-5 h-5 mb-1"></i>
                             ลบข้อมูลสินค้า
                         </button>
-                        <button type="button" id="btn-save" onclick="showNotice('บันทึกข้อมูลเรียบร้อย')"
+                        <button type="button" id="btn-save" onclick="handleMainSave()"
                             class="office-btn-primary flex flex-col items-center justify-center w-24 h-16 text-[10px] font-bold">
                             <i data-lucide="save" class="w-5 h-5 mb-1"></i>
                             บันทึก
@@ -899,6 +899,61 @@
     <script>
         const masterData = {};
         const lotData = {};
+        const DEFAULT_CANCER_DRUGS = {
+            'PD-00007': { name: 'Cisplatin 50mg', genericCode: 'GEN-CIS-50', genericName: 'Cisplatin', barcode: '885000000007', unit: 'ขวด', curQty: 120, minQty: 20, maxQty: 300, usage: 'หยดยาเข้าหลอดเลือดดำ', note: 'สวมอุปกรณ์ป้องกันทุกครั้ง', storage: 'room', routes: ['iv'], timeUse: 'none', usageEN: 'IV infusion use only', noteEN: 'Use PPE during preparation' },
+            'PD-00008': { name: 'Endoxan 500mg', genericCode: 'GEN-CYC-500', genericName: 'Cyclophosphamide', barcode: '885000000008', unit: 'ขวด', curQty: 180, minQty: 30, maxQty: 360, usage: 'ใช้ในการให้ยาเคมีบำบัด', note: 'ผสมในตู้ชีวนิรภัย', storage: 'room', routes: ['iv'], timeUse: 'none', usageEN: 'For chemotherapy administration', noteEN: 'Prepare in biological safety cabinet' },
+            'PD-00009': { name: 'Adriamycin 50mg', genericCode: 'GEN-DOX-50', genericName: 'Doxorubicin', barcode: '885000000009', unit: 'ขวด', curQty: 95, minQty: 20, maxQty: 250, usage: 'ให้ทางหลอดเลือดดำช้า', note: 'หลีกเลี่ยงการรั่วนอกหลอดเลือด', storage: 'ref', routes: ['iv'], timeUse: 'none', usageEN: 'Slow IV administration', noteEN: 'Avoid extravasation' },
+            'PD-00010': { name: 'Taxol 100mg', genericCode: 'GEN-PAC-100', genericName: 'Paclitaxel', barcode: '885000000010', unit: 'ขวด', curQty: 70, minQty: 15, maxQty: 220, usage: 'ให้ยาแบบ IV infusion', note: 'ต้องใช้ชุดกรองตามแนวทาง', storage: 'ref', routes: ['iv'], timeUse: 'none', usageEN: 'Administer via IV infusion', noteEN: 'Use in-line filter as protocol' },
+            'PD-00011': { name: 'Carboplatin 450mg', genericCode: 'GEN-CAR-450', genericName: 'Carboplatin', barcode: '885000000011', unit: 'ขวด', curQty: 88, minQty: 18, maxQty: 240, usage: 'ให้ยาทางหลอดเลือดดำ', note: 'คำนวณขนาดยาตาม AUC', storage: 'room', routes: ['iv'], timeUse: 'none', usageEN: 'IV administration', noteEN: 'Dose by AUC calculation' },
+            'PD-00012': { name: 'Gemcitabine 1g', genericCode: 'GEN-GEM-1000', genericName: 'Gemcitabine', barcode: '885000000012', unit: 'ขวด', curQty: 76, minQty: 15, maxQty: 210, usage: 'ให้ยาในระยะเวลาที่กำหนด', note: 'ติดตาม CBC ตามแผนรักษา', storage: 'ref', routes: ['iv'], timeUse: 'none', usageEN: 'Administer over scheduled period', noteEN: 'Monitor CBC per protocol' },
+            'PD-00013': { name: 'Fluorouracil 5g', genericCode: 'GEN-5FU-5000', genericName: 'Fluorouracil', barcode: '885000000013', unit: 'ขวด', curQty: 110, minQty: 25, maxQty: 320, usage: 'ให้ต่อเนื่องหรือ bolus ตามแผน', note: 'ตรวจสอบความเข้ากันได้ก่อนผสม', storage: 'room', routes: ['iv'], timeUse: 'none', usageEN: 'Continuous infusion or bolus per plan', noteEN: 'Check compatibility before admixture' },
+            'PD-00014': { name: 'Oxaliplatin 100mg', genericCode: 'GEN-OXA-100', genericName: 'Oxaliplatin', barcode: '885000000014', unit: 'ขวด', curQty: 64, minQty: 12, maxQty: 180, usage: 'ใช้ร่วมสูตร FOLFOX', note: 'หลีกเลี่ยงสารละลายที่มีคลอไรด์สูง', storage: 'ref', routes: ['iv'], timeUse: 'none', usageEN: 'Common in FOLFOX regimen', noteEN: 'Avoid high-chloride diluents' },
+            'PD-00015': { name: 'Docetaxel 80mg', genericCode: 'GEN-DOC-80', genericName: 'Docetaxel', barcode: '885000000015', unit: 'ขวด', curQty: 52, minQty: 10, maxQty: 160, usage: 'ให้ IV infusion ตาม protocol', note: 'ให้ premedication ก่อนใช้ยา', storage: 'ref', routes: ['iv'], timeUse: 'before', usageEN: 'IV infusion per protocol', noteEN: 'Premedication required before administration' },
+            'PD-00016': { name: 'Irinotecan 100mg', genericCode: 'GEN-IRI-100', genericName: 'Irinotecan', barcode: '885000000016', unit: 'ขวด', curQty: 60, minQty: 12, maxQty: 170, usage: 'ติดตามอาการไม่พึงประสงค์ทาง GI', note: 'เตรียมยาตามแนวทางความปลอดภัย', storage: 'room', routes: ['iv'], timeUse: 'none', usageEN: 'Monitor GI adverse effects', noteEN: 'Prepare under safe handling protocol' }
+        };
+        const DEFAULT_LOT_DATA = {
+            'PD-00007': [{ lot: 'CIS-2601', type: 'ใหม่', exp: '2027-12-31', qty: 120, note: 'ล็อตหลัก', status: 'ปกติ' }],
+            'PD-00008': [{ lot: 'CYC-2602', type: 'ใหม่', exp: '2027-10-30', qty: 180, note: 'พร้อมใช้งาน', status: 'ปกติ' }],
+            'PD-00009': [{ lot: 'DOX-2603', type: 'ใหม่', exp: '2027-08-15', qty: 95, note: 'เก็บเย็น', status: 'ปกติ' }],
+            'PD-00010': [{ lot: 'PAC-2604', type: 'ใหม่', exp: '2027-09-20', qty: 70, note: 'เก็บเย็น', status: 'ปกติ' }],
+            'PD-00011': [{ lot: 'CAR-2605', type: 'ใหม่', exp: '2028-01-18', qty: 88, note: 'AUC protocol', status: 'ปกติ' }],
+            'PD-00012': [{ lot: 'GEM-2606', type: 'ใหม่', exp: '2027-11-28', qty: 76, note: 'เก็บเย็น', status: 'ปกติ' }],
+            'PD-00013': [{ lot: '5FU-2607', type: 'ใหม่', exp: '2028-03-10', qty: 110, note: 'high use', status: 'ปกติ' }],
+            'PD-00014': [{ lot: 'OXA-2608', type: 'ใหม่', exp: '2027-07-07', qty: 64, note: 'เก็บเย็น', status: 'ปกติ' }],
+            'PD-00015': [{ lot: 'DOC-2609', type: 'ใหม่', exp: '2027-12-01', qty: 52, note: 'premed required', status: 'ปกติ' }],
+            'PD-00016': [{ lot: 'IRI-2610', type: 'ใหม่', exp: '2028-02-14', qty: 60, note: 'monitor diarrhea', status: 'ปกติ' }]
+        };
+
+        function initializeMasterDrugData() {
+            Object.entries(DEFAULT_CANCER_DRUGS).forEach(([code, data]) => {
+                if (!masterData[code]) {
+                    masterData[code] = { ...data };
+                }
+            });
+            Object.entries(DEFAULT_LOT_DATA).forEach(([code, lots]) => {
+                if (!lotData[code]) {
+                    lotData[code] = lots.map(item => ({ ...item }));
+                }
+            });
+        }
+
+        function renderDrugListTable() {
+            const tbody = document.getElementById('drug-list-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            Object.keys(masterData).sort().forEach(code => {
+                const data = masterData[code];
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 cursor-pointer text-gray-800";
+                tr.onclick = () => selectDrug(tr, code);
+                tr.innerHTML = `
+                    <td class="p-2 text-center">${code}</td>
+                    <td class="p-2">${data.name}</td>
+                    <td class="p-2 text-center">${data.curQty || 0}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
         function openModal() {
             const modal = document.getElementById('medicineModal');
@@ -1165,6 +1220,24 @@
             closeModal();
         }
 
+        function handleMainSave() {
+            const detailCode = document.getElementById('detail-code')?.value.trim();
+            const detailName = document.getElementById('detail-name')?.value.trim();
+            const currentQty = document.getElementById('detail-current-qty')?.value.trim();
+
+            if (!detailCode || !detailName) {
+                showNotice('ไม่พบข้อมูลยาที่พร้อมบันทึก กรุณาเลือกหรือกรอกข้อมูลยาให้ครบก่อน', 'warning');
+                return;
+            }
+
+            if (!currentQty || Number(currentQty) < 0) {
+                showNotice('กรุณาตรวจสอบจำนวนคงเหลือให้ถูกต้องก่อนบันทึก', 'warning');
+                return;
+            }
+
+            showNotice('บันทึกข้อมูลเรียบร้อย');
+        }
+
         function handleDeleteDrug() {
             showConfirm('คุณยืนยันที่จะลบข้อมูลยานี้ใช่หรือไม่? (การดำเนินการนี้ไม่สามารถย้อนกลับได้)', () => {
                 showNotice('ลบข้อมูลเรียบร้อยแล้ว', 'success');
@@ -1258,7 +1331,17 @@
         }
 
         window.onload = () => {
+            initializeMasterDrugData();
+            renderDrugListTable();
             lucide.createIcons();
+            const firstCode = Object.keys(masterData).sort()[0];
+            if (firstCode) {
+                currentDrugCode = firstCode;
+                const firstRow = document.querySelector('#drug-list-body tr');
+                if (firstRow) {
+                    selectDrug(firstRow, firstCode);
+                }
+            }
 
             if (currentUser) {
                 const fullNameEl = document.getElementById('user-fullname');
