@@ -19,16 +19,16 @@
 │                         Frontend Layer                      │
 │                      (HTML + CSS + JavaScript)              │
 ├─────────────────────────────────────────────────────────────┤
-│  • login.html         - ระบบเข้าสู่ระบบและลงทะเบียน        │
-│  • index.html         - หน้าหลัก Dashboard                  │
-│  • receive.html       - หน้าเบิก-รับยาเข้าคลัง             │
-│  • manage.html        - หน้าจัดการข้อมูลยา               │
-│  • dispense.html      - หน้าจัดการใบสั่งยา                │
-│  • prescription.html  - หน้าจ่ายยา                       │
-│  • patients.html      - หน้าจัดการข้อมูลผู้ป่วย            │
-│  • status.html        - หน้าตรวจสอบสถานะยา               │
-│  • report.html        - หน้าจัดพิมพ์รายงาน               │
-│  • users.html         - หน้าจัดการผู้ใช้ (Admin only)     │
+│  • login.html         - ระบบเข้าสู่ระบบและลงทะเบียน             │
+│  • index.html         - หน้าหลัก Dashboard                   │
+│  • receive.html       - หน้าเบิก-รับยาเข้าคลัง                   │
+│  • manage.html        - หน้าจัดการข้อมูลยา                     │
+│  • dispense.html      - หน้าจัดการใบสั่งยา                      │
+│  • prescription.html  - หน้าจ่ายยา                            │
+│  • patients.html      - หน้าจัดการข้อมูลผู้ป่วย                   │
+│  • status.html        - หน้าตรวจสอบสถานะยา                  │
+│  • report.html        - หน้าจัดพิมพ์รายงาน                     │
+│  • users.html         - หน้าจัดการผู้ใช้ (Admin only)            │
 └─────────────────────────────────────────────────────────────┘
                               ↓↑
                       (localStorage)
