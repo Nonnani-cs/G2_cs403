@@ -1,7 +1,7 @@
 import os
 import re
 
-directory = '/Users/atcharapornn/Desktop/Projest'
+directory = current_dir
 html_files = [f for f in os.listdir(directory) if f.endswith('.html')]
 
 for filename in html_files:

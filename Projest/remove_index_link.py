@@ -1,7 +1,7 @@
 import os
 import re
 
-directory = '/Users/atcharapornn/Desktop/Projest'
+directory = current_dir
 html_files = [f for f in os.listdir(directory) if f.endswith('.html')]
 
 pattern = r'\s*<a href="index\.html"[^>]*>.*?<span[^>]*>หน้าหลัก</span>.*?</a>\s*'

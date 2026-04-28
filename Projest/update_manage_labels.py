@@ -1,6 +1,8 @@
 import re
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
-filepath = '/Users/atcharapornn/Desktop/Projest/manage.html'
+filepath = os.path.join(current_dir, 'manage.html')
 with open(filepath, 'r') as f:
     content = f.read()
 

@@ -42,19 +42,19 @@ def generate_receive_rows():
 import re
 
 # Update manage.html
-with open('/Users/atcharapornn/Desktop/Projest/manage.html', 'r') as f:
+with open(os.path.join(current_dir, 'manage.html'), 'r', encoding='utf-8') as f:
     content = f.read()
 new_rows = generate_manage_rows()
 content = re.sub(r'<tbody id="drug-list-body".*?</tbody>', f'<tbody id="drug-list-body" class="divide-y divide-gray-200">\n{new_rows}\n                        </tbody>', content, flags=re.DOTALL)
-with open('/Users/atcharapornn/Desktop/Projest/manage.html', 'w') as f:
+with open(os.path.join(current_dir, 'manage.html'), 'w', encoding='utf-8') as f:
     f.write(content)
 
 # Update receive.html
-with open('/Users/atcharapornn/Desktop/Projest/receive.html', 'r') as f:
+with open(os.path.join(current_dir, 'receive.html'), 'r', encoding='utf-8') as f:
     content = f.read()
 new_rows = generate_receive_rows()
 content = re.sub(r'<tbody class="divide-y divide-gray-200">.*?</tbody>', f'<tbody class="divide-y divide-gray-200">\n{new_rows}\n                        </tbody>', content, flags=re.DOTALL)
-with open('/Users/atcharapornn/Desktop/Projest/receive.html', 'w') as f:
+with open(os.path.join(current_dir, 'receive.html'), 'w', encoding='utf-8') as f:
     f.write(content)
 
 print("Medication lists updated in manage.html and receive.html.")

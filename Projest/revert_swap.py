@@ -31,6 +31,6 @@ def revert(filepath):
     with open(filepath, 'w') as f:
         f.write(content)
 
-revert('/Users/atcharapornn/Desktop/Projest/manage.html')
-revert('/Users/atcharapornn/Desktop/Projest/receive.html')
+revert(os.path.join(current_dir, 'manage.html'))
+revert(os.path.join(current_dir, 'receive.html'))
 print("Reverted swap in both files.")

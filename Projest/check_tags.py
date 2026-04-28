@@ -1,4 +1,6 @@
 import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
 def check_html(filepath):
     with open(filepath, 'r') as f:
@@ -30,6 +32,6 @@ def check_html(filepath):
         print("No mismatched tags found (simple check).")
 
 print("Checking receive.html:")
-check_html('/Users/atcharapornn/Desktop/Projest/receive.html')
+check_html(os.path.join(current_dir, 'receive.html'))
 print("\nChecking manage.html:")
-check_html('/Users/atcharapornn/Desktop/Projest/manage.html')
+check_html(os.path.join(current_dir, 'manage.html'))
