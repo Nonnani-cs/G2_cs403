@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการใบสั่งยา - Chemotherapy Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <script>
+        // Session Check
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f9; }
+        .office-header { background: linear-gradient(to right, #1e3a8a, #2563eb); }
+        .office-card { background: white; border-radius: 4px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .office-table thead { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; }
+        .office-table th, .office-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
+        .office-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.5rem; font-size: 0.875rem; transition: all 0.2s; }
+        .office-input:focus { border-color: #3b82f6; ring: 2px; ring-color: #dbeafe; outline: none; }
+        .active-link { background-color: #eff6ff; color: #1e3a8a; font-weight: 700; border-left: 4px solid #1e3a8a !important; }
+        nav a, nav div { border-left: 4px solid transparent; border-radius: 8px; transition: all 0.2s; }
+        
+        .action-button { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; font-weight: bold; transition: all 0.2s;
+            background-color: white;
+        }
+        .action-button:hover { background-color: #f8fafc; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .blue-btn { color: #1e40af; }
+        .green-btn { color: #166534; }
+        
+        .lucide { width: 18px; height: 18px; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Smooth Modal System */
+        .modal-wrapper { 
+            position: fixed; inset: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(0px);
+            visibility: hidden; opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateZ(0);
+        }
+        .modal-wrapper.active { 
+            visibility: visible; opacity: 1; pointer-events: auto;
+            backdrop-filter: blur(4px);
+        }
+        .modal-card {
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-wrapper.active .modal-card {
+            transform: translateY(0);
+        }
+
+        /* Residual Stock UI */
+        .residual-badge {
+            background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+            padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 800;
+        }
+        .calc-panel {
+            background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px;
+            padding: 4px 8px; font-family: monospace; font-size: 10px;
+        }
+        /* Calculated Value Styling */
+        .antigravity-ml {
+            color: #7aa2f7 !important;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+        }
+        .mono-num {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Stock Status Cards */
+        .stock-card {
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 9px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: fit-content;
+        }
+        .card-orange { background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; } /* Pooling */
+        .card-blue { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }   /* New Vial */
+        .card-green { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }  /* New Residual */
+        .card-neon-green { background: #f0fdf4; color: #4ade80; border: 1px solid #bbf7d0; text-shadow: 0 0 2px rgba(74, 222, 128, 0.2); }
+
+        /* Compact Table - Extreme */
+        .compact-table th, .compact-table td { padding: 4px 10px !important; }
+        
+        /* Editable Dose Input */
+        .dose-input {
+            width: 70px;
+            text-align: center;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            color: #1e3a8a;
+            padding: 2px 4px;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .dose-input:focus {
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Icon Flash Prevention */
+        [data-lucide] { visibility: hidden; }
+        .lucide { visibility: visible !important; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-base">
+
+    <aside class="w-64 bg-white border-r flex flex-col shrink-0 sticky top-0 h-screen overflow-y-auto z-20">
+        <div class="p-6">
+            <h1 class="text-blue-900 font-bold text-lg leading-tight">ระบบจัดการยาเคมีบำบัด</h1>
+            <p class="text-gray-400 text-xs uppercase tracking-wider">CHEMO PHARMACY</p>
+        </div>
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="receive.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="clipboard-list" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">เบิก-รับยา</span>
+            </a>
+            <a href="manage.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="file-text" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">การจัดการข้อมูลยา</span>
+            </a>
+            <div class="flex items-center p-3 active-link">
+                <i data-lucide="file-edit" class="w-5 h-5 flex-shrink-0 mr-3 text-blue-900"></i>
+                <span class="text-sm font-bold">จัดการใบสั่งยา</span>
+            </div>
+            <a href="prescription.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="pill" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จ่ายยา</span>
+            </a>
+            <a href="patients.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="users" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการรายชื่อผู้ป่วย</span>
+            </a>
+            <a href="status.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="search" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">ตรวจสอบสถานะยา</span>
+            </a>
+            <a href="report.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="bar-chart-2" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดพิมพ์รายงาน</span>
+            </a>
+            <a href="users.html" id="nav-users" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group hidden">
+                <i data-lucide="users-2" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการผู้ใช้งาน</span>
+            </a>
+        </nav>
+        <div onclick="checkSupervisor()" class="p-4 border-t flex items-center bg-gray-50 mt-auto cursor-pointer hover:bg-blue-50 transition-colors group">
+            <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=2563eb&color=fff" class="w-10 h-10 rounded-full mr-3 border border-gray-200 shadow-sm group-hover:scale-105 transition-transform">
+            <div class="flex-1 min-w-0">
+                <p id="user-fullname" class="text-sm font-bold text-gray-700 truncate">...</p>
+                <div class="flex items-center gap-1">
+                    <p id="user-role" class="text-xs text-gray-500 uppercase font-bold">...</p>
+                    <i id="override-icon" data-lucide="lock" class="w-2.5 h-2.5 text-gray-400 hidden"></i>
+                </div>
+            </div>
+            <button onclick="event.stopPropagation(); logout()" class="text-gray-400 hover:text-red-500 transition ml-2">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col bg-[#f1f5f9] min-w-0 overflow-hidden">
+        <header class="office-header text-white px-8 py-4 flex justify-between items-center shrink-0 shadow-lg z-10 sticky top-0">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i data-lucide="file-edit" class="w-6 h-6"></i></div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight leading-none">จัดการใบสั่งยาเคมีบำบัด</h1>
+                    <p class="text-[10px] text-blue-100 uppercase tracking-widest mt-1 opacity-80">Prescription Order Management</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="openResidualModal()" id="global-residual-info" class="flex items-center gap-2 bg-white/10 px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/20 transition-all shadow-inner group">
+                    <i data-lucide="droplet" class="w-4 h-4 text-yellow-300 group-hover:scale-110 transition-transform"></i>
+                    <div class="text-left">
+                        <div class="text-[9px] text-blue-100 leading-none opacity-80 uppercase font-bold">Residual Stock</div>
+                        <div class="text-[11px] font-black"><span id="residual-count">0</span> รายการพร้อมใช้</div>
+                    </div>
+                </button>
+                <button onclick="addNewPrescription()" class="bg-white text-blue-700 px-6 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-blue-50 transition-all flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มใบสั่งใหม่
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 p-4 flex gap-4 items-start overflow-y-auto">
+            
+            <!-- Left Side: Prescription List -->
+            <div class="w-80 office-card flex flex-col rounded shadow-sm overflow-hidden bg-white shrink-0 sticky top-24 max-h-[calc(100vh-6rem)]">
+                <div class="p-3 bg-gray-50 border-b space-y-2">
+                    <div class="flex gap-2">
+                        <select id="sidebar-filter" onchange="initPrescriptionSidebar()" class="flex-1 border p-1.5 rounded text-[10px] font-bold outline-none focus:border-blue-500">
+                            <option value="">ทั้งหมด</option>
+                            <option value="">ยังไม่จ่าย</option>
+                            <option value="">จ่ายแล้ว</option>
+                        </select>
+                        <select id="sidebar-sort" onchange="initPrescriptionSidebar()" class="flex-1 border p-1.5 rounded text-[10px] font-bold outline-none focus:border-blue-500 bg-blue-50/50">
+                            <option value="">ใหม่สุด</option>
+                            <option value="">เก่าสุด</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <input type="text" oninput="searchPrescriptions(this.value)" placeholder="ค้นหาตาม HN หรือ ชื่อผู้ป่วย..." class="w-full border p-2 pl-8 rounded text-xs outline-none focus:border-blue-500">
+                        <i data-lucide="search" class="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-y-auto scroll-stable">
+                    <table class="w-full text-xs">
+                        <thead class="bg-gray-100 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="border-b p-2 w-10 text-center"></th>
+                                <th class="border-b p-2 text-center w-24">รหัส HN</th>
+                                <th class="border-b p-2 text-left">ชื่อผู้ป่วย (Patient Name)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prescription-list-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Side: Prescription Workspace -->
+            <div class="w-2/3 flex flex-col gap-4 flex-1">
+                
+                <!-- Patient Details & Status -->
+                <div class="office-card p-4 rounded grid grid-cols-12 gap-4 bg-white shrink-0">
+                    <div class="col-span-8 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">รหัส HN</span>
+                            <input type="text" id="order-no" oninput="syncPrescriptionData()" value="" class="border p-1.5 rounded text-sm w-48 bg-blue-50 font-black text-blue-900 outline-none focus:border-blue-500">
+                            <span id="order-status" class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-black uppercase">รอดำเนินการ</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">ชื่อผู้ป่วย</span>
+                            <input type="text" id="patient-name" oninput="syncPrescriptionData()" placeholder="ระบุชื่อผู้ป่วย..." class="border p-1.5 rounded text-sm flex-1 outline-none font-bold focus:border-blue-500">
+                            <span class="text-xs font-bold text-gray-400">STATUS:</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">ครั้งที่</span>
+                            <input type="number" id="cycle-number" placeholder="ระบุรอบ..." class="border p-1.5 rounded text-sm w-24 outline-none focus:border-blue-500 text-center font-bold">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-tight ml-4">วันที่จ่ายยา</span>
+                            <input type="date" id="dispense-date" class="border p-1.5 rounded text-sm flex-1 outline-none focus:border-blue-500 font-bold text-gray-700">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">แพทย์ผู้สั่ง</span>
+                            <input type="text" id="doctor-name" oninput="syncPrescriptionData()" placeholder="ระบุชื่อแพทย์..." class="border p-1.5 rounded text-sm flex-1 border-blue-200 font-bold outline-none focus:border-blue-500">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">วิธีการให้ยา</span>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 flex-1 bg-gray-50 p-2 rounded border border-gray-200">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-4 h-4 accent-blue-600"> <span class="text-xs font-medium text-gray-700">ยาฉีดเข้า IV</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-blue-600"> <span class="text-xs font-medium text-gray-700">ยาฉีดเข้าใต้ผิวหนัง (SC)</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-blue-600"> <span class="text-xs font-medium text-gray-700">ยาฉีดเข้าทางกล้ามเนื้อ (IM)</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-blue-600"> <span class="text-xs font-medium text-gray-700">ยาฉีดเข้าทางไขสันหลัง (IT)</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Grid -->
+                    <div class="col-span-4 grid grid-cols-2 border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+                        <button onclick="saveCurrentPrescription()" class="action-button blue-btn border-r border-b bg-blue-50/50">
+                            <i data-lucide="save" class="mb-1 text-blue-700"></i>บันทึกใบสั่ง
+                        </button>
+                        <button onclick="alert('กำลังพิมพ์ใบจัดยา...')" class="action-button blue-btn border-b">
+                            <i data-lucide="printer" class="mb-1 text-blue-600"></i>พิมพ์ใบจัดยา
+                        </button>
+                        <button onclick="addNewPrescription()" class="action-button green-btn border-r">
+                            <i data-lucide="file-plus" class="mb-1 text-green-600"></i>ใบสั่งยาใหม่
+                        </button>
+                        <button onclick="alert('ฟีเจอร์ค้นหาประวัติกำลังพัฒนา')" class="action-button blue-btn">
+                            <i data-lucide="search" class="mb-1 text-blue-600"></i>ค้นหาประวัติ
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Doctor's Orders Section (Source of Truth) -->
+                <div class="office-card rounded overflow-hidden flex flex-col bg-white border-blue-900 shadow-md">
+                    <div class="bg-blue-900 text-white px-4 py-2 flex justify-between items-center shrink-0">
+                        <h3 class="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> รายการที่แพทย์สั่ง / Doctor's Orders
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="addDoctorOrderRow()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-[9px] font-black uppercase transition-all flex items-center gap-1">
+                                <i data-lucide="plus-circle" class="w-3 h-3"></i> เพิ่มรายการแพทย์สั่ง
+                            </button>
+                        </div>
+                    </div>
+                    <div class="max-h-40 overflow-y-auto bg-blue-50/20">
+                        <table class="w-full text-xs border-collapse">
+                            <thead class="bg-white/80 sticky top-0 z-10 text-blue-900 border-b border-blue-100">
+                                <tr>
+                                    <th class="p-2 text-center w-12 border-r">ลำดับ</th>
+
+                                    <th class="p-2 text-left border-r">ชื่อยาที่แพทย์สั่ง</th>
+                                    <th class="p-2 text-center w-32">ขนาดยา (mg)</th>
+                                    <th class="p-2 w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="doctor-orders-body" class="divide-y divide-blue-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Medication Items Table -->
+                <div class="office-card rounded overflow-hidden flex flex-col bg-white">
+                    <div class="bg-blue-600 text-white px-4 py-2 flex justify-between items-center shrink-0">
+                        <h3 class="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="list-checks" class="w-3.5 h-3.5"></i> รายการยาในใบสั่งนี้ / Medication Items
+                        </h3>
+                        <div class="flex gap-4 items-center">
+                            <button onclick="addMedicationRow()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-[9px] font-black uppercase transition-all flex items-center gap-1">
+                                <i data-lucide="plus" class="w-3 h-3"></i> เพิ่มรายการยา
+                            </button>
+                            <div class="text-[10px] font-bold">VERIFIED <i data-lucide="shield-check" class="inline w-3 h-3 ml-1 text-green-300"></i></div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto scroll-stable">
+                        <table class="w-full text-xs border-collapse compact-table" style="min-width: 1000px;">
+                            <thead class="bg-gray-100 sticky top-0 z-10 text-gray-600 border-b">
+                                <tr>
+                                    <th class="p-2 text-center w-12">ลำดับ</th>
+                                    <th class="p-2 text-left min-w-[250px]">รายการยา (Drug Name + PD-ID)</th>
+                                    <th class="p-2 text-center w-24">Lot No</th>
+                                    <th class="p-2 text-left w-40">วันที่เปิด / วันหมดอายุ</th>
+                                    <th class="p-2 text-center w-24">จำนวนยาที่จ่าย</th>
+                                    <th class="p-2 text-center w-40">จำนวนเต็ม (mg)</th>
+                                    <th class="p-2 text-center w-24">ขนาดยาที่ใช้ (ml)</th>
+                                    <th class="p-2 text-center w-24">เหลือเท่าไหร่ (ml)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="items-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex justify-between items-center px-4 py-2 bg-blue-50 border-t border-blue-100 text-xs font-bold">
+                        <div class="flex gap-2">
+                            <button type="button" onclick="confirm('ยืนยันการยกเลิกใบสั่งยา?') && alert('ยกเลิกเรียบร้อย')" class="bg-white border border-red-200 text-red-600 px-4 py-1.5 rounded text-[11px] font-bold hover:bg-red-50 transition shadow-sm">ยกเลิกใบสั่ง</button>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <div class="flex items-center gap-2 mr-4">
+                                <span class="text-gray-500 uppercase text-[9px]">รวมจำนวนรายการยา:</span>
+                                <span id="total-items-count" class="text-base text-blue-900 font-black tracking-tighter">0</span>
+                                <span class="text-gray-400 font-normal">ml</span>
+                            </div>
+                            <button id="had-check-btn" onclick="openHadModal()" class="bg-orange-500 text-white px-4 py-1.5 rounded shadow-md text-[11px] font-bold hover:bg-orange-600 transition flex items-center gap-1.5">
+                                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> ตรวจสอบ HAD
+                            </button>
+                            <button id="confirm-dispense-btn" type="button" onclick="goToDispense()" class="bg-blue-600 text-white px-5 py-1.5 rounded shadow-md text-[11px] font-bold hover:bg-blue-700 transition flex items-center gap-1.5">
+                                ยืนยันจ่ายยา <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!-- Notice Modal -->
+    <div id="noticeModal" class="modal-wrapper">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden modal-card flex flex-col">
+            <div id="noticeHeader" class="p-4 text-white flex items-center gap-3 shrink-0">
+                <i id="noticeIcon" data-lucide="info" class="w-6 h-6"></i>
+                <h3 id="noticeTitle" class="font-bold">คำแนะนำ</h3>
+            </div>
+            <div class="p-6 text-center">
+                <p id="noticeMessage" class="text-sm text-gray-700 font-medium"></p>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-center">
+                <button onclick="closeNotice()" class="office-btn-primary px-10">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <!-- Residual Summary Modal -->
+    <div id="residualModal" class="modal-wrapper" onclick="event.target === this && closeResidualModal()">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden modal-card flex flex-col">
+            <div class="bg-gradient-to-r from-blue-900 to-blue-700 p-4 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="droplet" class="w-6 h-6 text-yellow-300"></i>
+                    <div>
+                        <h3 class="font-bold leading-none">สรุปยอดเศษยาคงเหลือ (Residual Summary)</h3>
+                        <p class="text-[10px] text-blue-200 mt-1 uppercase tracking-widest font-bold">Real-time Stability Tracking</p>
+                    </div>
+                </div>
+                <button onclick="closeResidualModal()" class="text-white hover:text-red-200 transition text-2xl">&times;</button>
+            </div>
+            <div class="flex-1 overflow-auto p-4 bg-gray-50">
+                <table class="w-full text-sm bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+                    <thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
+                        <tr>
+                            <th class="p-3 text-left">รายการยา</th>
+                            <th class="p-3 text-center">คงเหลือ (ml)</th>
+                            <th class="p-3 text-center">ความคงตัว (Stability)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="residual-modal-body" class="divide-y divide-gray-50"></tbody>
+                </table>
+                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-100 rounded-lg flex gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-yellow-600 shrink-0"></i>
+                    <p class="text-[11px] text-yellow-800 leading-relaxed font-medium">
+                        <span class="font-bold text-yellow-900">คำแนะนำ:</span> โปรดใช้เศษยาที่เหลืออยู่ก่อนเปิดขวดใหม่เสมอ และตรวจสอบเวลาที่เปิดขวด (Opened Time) เพื่อความปลอดภัยสูงสุดของคนไข้
+                    </p>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-t flex justify-center">
+                <button onclick="closeResidualModal()" class="office-btn-primary px-12">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HAD Check Modal -->
+    <div id="hadModal" class="modal-wrapper" onclick="event.target === this && closeHadModal()">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden modal-card flex flex-col">
+            <div class="bg-gradient-to-r from-orange-600 to-red-600 p-4 text-white flex items-center gap-3 shrink-0">
+                <i data-lucide="shield-alert" class="w-8 h-8"></i>
+                <div>
+                    <h3 class="font-black text-lg leading-none uppercase">HAD Safety Check</h3>
+                    <p class="text-[10px] text-orange-100 mt-1 font-bold">ขั้นตอนตรวจสอบยาระดับความเสี่ยงสูง</p>
+                </div>
+            </div>
+            <div class="p-6 bg-orange-50/30 space-y-4">
+                <div class="p-3 bg-white border border-orange-200 rounded-lg">
+                    <p class="text-[10px] font-bold text-orange-600 uppercase mb-1">Verify Medication Identity</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="stock-code-verify" placeholder="Scan or Enter Stock Code..." class="flex-1 border-2 border-orange-300 p-2 text-sm font-bold outline-none focus:border-red-500 rounded">
+                        <div class="bg-gray-100 px-3 py-2 rounded text-xs font-black text-gray-500 border border-gray-200 flex items-center" id="presc-code-hint">CODE: PD-XXXXX</div>
+                    </div>
+                </div>
+                
+                <p class="text-sm font-bold text-gray-700 border-b border-orange-200 pb-2">Double Check Checklist:</p>
+                <div class="space-y-3">
+                    <label class="flex items-center gap-3 p-2 bg-white/50 border border-orange-100 rounded cursor-pointer hover:bg-orange-50 transition">
+                        <input type="checkbox" class="w-4 h-4 had-check-item">
+                        <span class="text-xs font-bold text-gray-700">Patient & Prescription Identity Correct</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-2 bg-white/50 border border-orange-100 rounded cursor-pointer hover:bg-orange-50 transition">
+                        <input type="checkbox" class="w-4 h-4 had-check-item">
+                        <span class="text-xs font-bold text-gray-700">Volume (ml) matches Dose (mg) / Conc</span>
+                    </label>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-t flex justify-center gap-3">
+                <button onclick="closeHadModal()" class="office-btn-secondary px-8">ยกเลิก</button>
+                <button id="verify-had-btn" onclick="verifyHad()" class="bg-red-600 text-white px-10 py-2 rounded font-bold shadow-lg opacity-50 cursor-not-allowed" disabled>ยืนยันความปลอดภัย</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Residual & Inventory Logic ---
+        const drugInventory = {
+            'PD-00008': { name: 'Endoxan', totalVol: 20, conc: 25 }, // 500mg/20ml
+            'PD-00009': { name: 'Adriamycin', totalVol: 25, conc: 2 }, // 50mg/25ml
+            'PD-00007': { name: 'Cisplatin', totalVol: 50, conc: 1 },  // 50mg/50ml
+            'PD-00010': { name: 'Taxol', totalVol: 16.7, conc: 6 }    // 100mg/16.7ml
+        };
+
+        let residualStock = {
+            'PD-00008': { volume: 5.5, openDate: '2026-03-20', expiryDate: '2026-04-20' }, // Expired
+            'PD-00009': { volume: 0 }
+        };
+
+        const prescriptions = {
+            'RX-2026-001': { 
+                patient: 'นายสมชาย ใจดี', hn: '66001234', doctor: 'นพ.เก่งกาจ สามารถ', status: 'รอดำเนินการ',
+                createdAt: Date.now() - 2000000,
+                items: [
+                    { id: 'PD-00008', name: 'Endoxan', doseMg: 300, note: 'IV drip in 1 hour' },
+                    { id: 'PD-00009', name: 'Adriamycin', doseMg: 40, note: 'IV push (Slow)' }
+                ]
+            },
+            'RX-2026-002': { 
+                patient: 'นางสมหญิง แสงดี', hn: '66005678', doctor: 'พญ.อารีย์ ใจกว้าง', status: 'รอดำเนินการ',
+                createdAt: Date.now() - 1000000,
+                items: [
+                    { id: 'PD-00007', name: 'Cisplatin', doseMg: 45, note: 'IV infusion' }
+                ]
+            },
+            'RX-2026-003': { 
+                patient: 'น.ส.ใจใส มีสุข', hn: '66009999', doctor: 'นพ.สมพร สอนดี', status: 'รอดำเนินการ',
+                createdAt: Date.now(),
+                items: [
+                    { id: 'PD-00010', name: 'Taxol', doseMg: 85, note: 'IV drip' }
+                ]
+            }
+        };
+
+        function calculateResidual(drugId, doseMg) {
+            const drug = drugInventory[drugId];
+            if (!drug) return { ml: 0, vials: 0, leftover: 0, isExpired: false, expiryDate: '' };
+
+            const requiredMl = doseMg / drug.conc;
+            let resData = residualStock[drugId] || { volume: 0 };
+            let currentResidual = resData.volume || 0;
+            
+            // Expiry Check
+            let isExpired = false;
+            let isNearExpiry = false;
+            if (currentResidual > 0 && resData.expiryDate) {
+                const expDate = new Date(resData.expiryDate);
+                const today = new Date();
+                const diffTime = expDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 0) isExpired = true;
+                else if (diffDays <= 7) isNearExpiry = true;
+            }
+
+            // If expired, we can't use it! We must discard it.
+            let usableResidual = isExpired ? 0 : currentResidual;
+
+            let neededFromVials = requiredMl;
+            let usedFromResidual = 0;
+
+            if (usableResidual >= requiredMl) {
+                usedFromResidual = requiredMl;
+                neededFromVials = 0;
+            } else {
+                usedFromResidual = usableResidual;
+                neededFromVials = requiredMl - usableResidual;
+            }
+
+            const vialsToOpen = Math.ceil(neededFromVials / drug.totalVol);
+            const totalMlAvailable = (vialsToOpen * drug.totalVol);
+            const leftover = vialsToOpen > 0 ? (totalMlAvailable - neededFromVials) : 0;
+
+            return {
+                requiredMl: requiredMl.toFixed(2),
+                usedFromResidual: usedFromResidual.toFixed(2),
+                neededFromVials: neededFromVials.toFixed(2),
+                vialsToOpen: vialsToOpen,
+                leftover: leftover.toFixed(2),
+                concentration: drug.conc,
+                isExpired: isExpired,
+                isNearExpiry: isNearExpiry,
+                expiryDate: resData.expiryDate,
+                openDate: resData.openDate,
+                expiredVolume: isExpired ? currentResidual.toFixed(2) : 0
+            };
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+            
+            if (currentUser) {
+                const fullNameEl = document.getElementById('user-fullname');
+                const roleEl = document.getElementById('user-role');
+                const avatarEl = document.getElementById('user-avatar');
+                const navUsers = document.getElementById('nav-users');
+
+                if (fullNameEl) fullNameEl.textContent = currentUser.fullname;
+                if (roleEl) roleEl.textContent = currentUser.role;
+                if (avatarEl) avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.fullname)}&background=2563eb&color=fff`;
+
+                if (currentUser.role === 'Senior Pharmacist') {
+                    if (navUsers) navUsers.classList.remove('hidden');
+                }
+            }
+
+            document.body.classList.add("ready");
+            initPrescriptionSidebar();
+        };
+
+        function searchPrescriptions(q) {
+            initPrescriptionSidebar();
+        }
+
+        function initPrescriptionSidebar() {
+            const tbody = document.getElementById('prescription-list-body');
+            tbody.innerHTML = '';
+            
+            const filter = document.getElementById('sidebar-filter').value;
+            const sort = document.getElementById('sidebar-sort').value;
+            const searchInput = document.querySelector('input[oninput="searchPrescriptions(this.value)"]');
+            const searchQuery = (searchInput ? searchInput.value : '').toLowerCase();
+
+            let ids = Object.keys(prescriptions);
+            
+            // Sort
+            ids.sort((a, b) => {
+                const timeA = prescriptions[a].createdAt || 0;
+                const timeB = prescriptions[b].createdAt || 0;
+                return sort === 'new' ? timeB - timeA : timeA - timeB;
+            });
+
+            ids.forEach(id => {
+                const data = prescriptions[id];
+                
+                // Filter Status
+                if (filter === 'pending' && data.status === 'จ่ายแล้ว') return;
+                if (filter === 'done' && data.status !== 'จ่ายแล้ว') return;
+                
+                // Filter Search
+                const hnMatch = (data.hn || '').toLowerCase().includes(searchQuery);
+                const nameMatch = (data.patient || '').toLowerCase().includes(searchQuery);
+                if (searchQuery && !hnMatch && !nameMatch) return;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors cursor-pointer group border-b border-gray-50";
+                tr.onclick = () => loadPrescription(id);
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-center"><i data-lucide="file-text" class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition"></i></td>
+                    <td class="p-3 text-center font-black text-blue-900">${data.hn || '-'}</td>
+                    <td class="p-3 font-bold text-gray-700">${data.patient}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons({ root: tbody });
+        }
+
+        function addNewPrescription() {
+            // Generate New ID
+            const existingIds = Object.keys(prescriptions).map(id => {
+                const parts = id.split('-');
+                return parts.length === 3 ? parseInt(parts[2]) : 0;
+            });
+            const nextIdNum = Math.max(0, ...existingIds) + 1;
+            const nextId = `RX-2026-${nextIdNum.toString().padStart(3, '0')}`;
+
+            // Reset UI
+            document.getElementById('order-no').value = '';
+            document.getElementById('doctor-name').value = '';
+            document.getElementById('order-status').innerText = 'ใบสั่งยาใหม่';
+            document.getElementById('order-status').className = "bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+
+            const tbody = document.getElementById('items-table-body');
+            tbody.innerHTML = '';
+            document.getElementById('total-items-count').innerText = '0';
+
+            // Register in data object
+            prescriptions[nextId] = {
+                patient: 'รอกรอกชื่อ...', hn: '', doctor: '', status: 'ใบสั่งยาใหม่', items: [],
+                createdAt: Date.now()
+            };
+
+            // Add First Empty Row
+            addMedicationRow();
+            
+            initPrescriptionSidebar();
+            showAntigravityNotice('เริ่มสร้างใบสั่งยาใหม่ • ' + nextId);
+        }
+
+        function addDoctorOrderRow() {
+            const tbody = document.getElementById('doctor-orders-body');
+            const index = tbody.children.length;
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-blue-50/50";
+            tr.innerHTML = `
+                <td class="p-2 text-center text-gray-400 font-bold border-r">${index + 1}</td>
+
+                <td class="p-2 border-r">
+                    <input type="text" placeholder="ชื่อยา..." class="w-full text-[11px] font-bold p-1 bg-transparent border-none outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 rounded">
+                </td>
+                <td class="p-2 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        <input type="number" placeholder="0" class="w-20 text-center font-black text-blue-900 p-1 bg-transparent border-none outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 rounded">
+                        <span class="text-[9px] text-gray-400 font-bold">mg</span>
+                    </div>
+                </td>
+                <td class="p-2 text-center">
+                    <button onclick="this.closest('tr').remove()" class="text-gray-300 hover:text-red-500"><i data-lucide="x" class="w-3 h-3"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            lucide.createIcons({ root: tr });
+        }
+
+        function syncPrescriptionData() {
+            const orderId = document.getElementById('order-no').value;
+            if (!prescriptions[orderId]) return;
+
+            prescriptions[orderId].patient = document.getElementById('patient-name').value || 'รอกรอกชื่อ...';
+            prescriptions[orderId].hn = orderId; // Use the primary HN field as the HN value
+            prescriptions[orderId].doctor = document.getElementById('doctor-name').value;
+            
+            // Sync any unsaved drug inputs
+            const tbody = document.getElementById('items-table-body');
+            Array.from(tbody.children).forEach((tr, index) => {
+                const drugInput = tr.querySelector('input[list="drug-list"]');
+                if (drugInput && drugInput.value) {
+                    handleDrugSearch(index, drugInput.value);
+                }
+                const doseInput = tr.querySelector('.dose-input');
+                if (doseInput && doseInput.value) {
+                    updateManualRowCalc(index, doseInput.value);
+                }
+            });
+            
+            initPrescriptionSidebar();
+        }
+
+        function saveCurrentPrescription() {
+            syncPrescriptionData();
+
+            const orderId = document.getElementById('order-no').value;
+            const data = prescriptions[orderId];
+            
+            if (!data.patient || data.patient === 'รอกรอกชื่อ...') {
+                showNotice('กรุณากรอกชื่อผู้ป่วยก่อนบันทึก', 'warning');
+                return;
+            }
+
+            // Clean up empty rows
+            data.items = data.items.filter(item => item && item.id);
+
+            if (data.items.length === 0) {
+                showNotice('กรุณาเพิ่มรายการยาอย่างน้อย 1 รายการ หรือกรอกชื่อยาให้ถูกต้องตามฐานข้อมูล', 'warning');
+                // Re-add an empty row so they can try again
+                addMedicationRow();
+                return;
+            }
+
+            data.status = "บันทึกแล้ว";
+            document.getElementById('order-status').innerText = "บันทึกแล้ว";
+            document.getElementById('order-status').className = "bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+            
+            initPrescriptionSidebar();
+            showAntigravityNotice('บันทึกใบสั่งยาเรียบร้อย • ' + orderId);
+            
+            // Re-render table so it turns into the "saved" text view
+            renderMedTable(orderId);
+        }
+
+        function addMedicationRow() {
+            const orderId = document.getElementById('order-no').value;
+            const tbody = document.getElementById('items-table-body');
+            const index = tbody.children.length;
+
+            const tr = document.createElement('tr');
+            tr.id = `row-${index}`;
+            tr.className = "hover:bg-gray-50 border-b transition-colors";
+
+            // Create datalist if it doesn't exist
+            if (!document.getElementById('drug-list')) {
+                const datalist = document.createElement('datalist');
+                datalist.id = 'drug-list';
+                Object.keys(drugInventory).forEach(id => {
+                    const opt = document.createElement('option');
+                    opt.value = `${drugInventory[id].name} (${id})`;
+                    opt.dataset.id = id;
+                    datalist.appendChild(opt);
+                });
+                document.body.appendChild(datalist);
+            }
+
+            // Create lot-list if it doesn't exist
+            if (!document.getElementById('lot-list')) {
+                const lotList = document.createElement('datalist');
+                lotList.id = 'lot-list';
+                ['LOT-67001', 'LOT-67002', 'LOT-67003', 'LOT-67004', 'LOT-67005'].forEach(lot => {
+                    const opt = document.createElement('option');
+                    opt.value = lot;
+                    lotList.appendChild(opt);
+                });
+                document.body.appendChild(lotList);
+            }
+
+            tr.innerHTML = `
+                <td class="p-2 text-center text-gray-400 font-bold border-r mono-num">${index + 1}</td>
+                <td class="p-2 border-r">
+                    <input type="text" list="drug-list" 
+                           onchange="handleDrugSearch(${index}, this.value)"
+                           placeholder="เลือกรายการยา..." 
+                           class="w-full text-[12px] font-black p-1 border rounded outline-none focus:border-blue-500 bg-gray-50/50 text-blue-900 tracking-tighter">
+                </td>
+                <td class="p-2 border-r">
+                    <input type="text" list="lot-list" placeholder="เลือก Lot..." class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold">
+                </td>
+                <td class="p-2 border-r">
+                    <div class="flex flex-col gap-1">
+                        <input type="text" placeholder="เปิด: วว/ดด/ปป" class="w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500">
+                        <input type="text" placeholder="หมด: วว/ดด/ปป" class="w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500 bg-red-50/30">
+                    </div>
+                </td>
+                <td class="p-2 border-r">
+                    <input type="text" placeholder="จำนวนขวด" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center">
+                </td>
+                <td class="p-2 border-r">
+                    <input type="text" placeholder="เช่น 594(เศษ 154 + ใหม่ 440)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500">
+                </td>
+                <td class="p-2 border-r">
+                    <input type="text" placeholder="Dose (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-blue-900">
+                </td>
+                <td class="p-2">
+                    <input type="text" placeholder="คงเหลือ (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-green-700">
+                </td>
+            `;
+            tbody.appendChild(tr);
+            
+            // Sync data object
+            if (prescriptions[orderId]) {
+                prescriptions[orderId].items[index] = { id: '', name: '', doseMg: 0 };
+            }
+        }
+
+        function handleDrugSearch(index, drugName) {
+            const orderId = document.getElementById('order-no').value;
+            // Find ID from name in inventory
+            let drugId = '';
+            for (let id in drugInventory) {
+                const fullName = `${drugInventory[id].name} (${id})`;
+                if (fullName === drugName || drugInventory[id].name === drugName) {
+                    drugId = id;
+                    break;
+                }
+            }
+
+            if (!drugId) {
+                // If not found by name, try checking if they typed the ID
+                if (drugInventory[drugName]) drugId = drugName;
+            }
+
+            const drug = drugInventory[drugId];
+            if (!drug) return;
+
+            // Update UI
+            document.getElementById(`conc-val-${index}`).innerText = drug.conc;
+            
+            // Sync Data
+            const item = prescriptions[orderId].items[index];
+            item.id = drugId;
+            item.name = drug.name;
+
+            // Recalculate
+            const doseInput = document.querySelector(`#row-${index} .dose-input`);
+            if (doseInput) {
+                updateManualRowCalc(index, doseInput.value);
+            }
+        }
+
+        function updateManualRowCalc(index, doseVal) {
+            const orderId = document.getElementById('order-no').value;
+            const doseMg = parseFloat(doseVal) || 0;
+            const item = prescriptions[orderId].items[index];
+            if (!item || !item.id) return;
+
+            item.doseMg = doseMg;
+            const calc = calculateResidual(item.id, doseMg);
+
+            // Update UI
+            document.getElementById(`vol-cell-${index}`).innerHTML = getVolumeCellHtml(calc);
+            const statusCell = document.getElementById(`stock-status-${index}`);
+            statusCell.innerHTML = getStockStatusHtml(calc);
+            lucide.createIcons({ root: statusCell });
+
+            // Update Grand Total
+            let total = 0;
+            prescriptions[orderId].items.forEach(it => total += parseFloat(it.doseMg || 0));
+            document.getElementById('total-items-count').innerText = total.toFixed(0);
+        }
+
+        function loadPrescription(id) {
+            const data = prescriptions[id];
+            if (!data) return;
+
+            document.getElementById('order-no').value = id;
+            document.getElementById('patient-name').value = data.patient === 'รอกรอกชื่อ...' ? '' : data.patient;
+            document.getElementById('doctor-name').value = data.doctor;
+            document.getElementById('order-status').innerText = data.status;
+            
+            const statusBadge = document.getElementById('order-status');
+            if (data.status === 'บันทึกแล้ว') {
+                statusBadge.className = "bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+            } else if (data.status === 'ใบสั่งยาใหม่') {
+                statusBadge.className = "bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+            } else {
+                statusBadge.className = "bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+            }
+
+            renderMedTable(id);
+        }
+
+        function renderMedTable(orderId) {
+            const data = prescriptions[orderId];
+            const tbody = document.getElementById('items-table-body');
+            tbody.innerHTML = '';
+            
+            let totalMg = 0;
+
+            data.items.forEach((item, index) => {
+                const calc = calculateResidual(item.id, item.doseMg);
+                totalMg += parseFloat(item.doseMg || 0);
+
+                const tr = document.createElement('tr');
+                tr.id = `row-${index}`;
+                tr.className = "hover:bg-gray-50 border-b transition-colors";
+
+                const stockActionHtml = getStockStatusHtml(calc);
+
+                tr.innerHTML = `
+                    <td class="p-2 text-center text-gray-400 font-bold border-r mono-num">${index + 1}</td>
+                    <td class="p-2 border-r">
+                        <input type="text" list="drug-list" value=""
+                               placeholder="เลือกรายการยา..." 
+                               class="w-full text-[12px] font-black p-1 border rounded outline-none focus:border-blue-500 bg-gray-50/50 text-blue-900 tracking-tighter">
+                    </td>
+                    <td class="p-2 border-r">
+                        <input type="text" list="lot-list" value="" placeholder="เลือก Lot..." class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold">
+                    </td>
+                    <td class="p-2 border-r">
+                        <div class="flex flex-col gap-1">
+                            <input type="text" value="" placeholder="เปิด: วว/ดด/ปป" class="w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500">
+                            <input type="text" value="" placeholder="หมด: วว/ดด/ปป" class="w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500 bg-red-50/30">
+                        </div>
+                    </td>
+                    <td class="p-2 border-r">
+                        <input type="text" value="" placeholder="จำนวนขวด" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center">
+                    </td>
+                    <td class="p-2 border-r">
+                        <input type="text" value="" placeholder="เช่น 594(เศษ 154 + ใหม่ 440)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500">
+                    </td>
+                    <td class="p-2 border-r">
+                        <input type="text" value="" placeholder="Dose (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-blue-900">
+                    </td>
+                    <td class="p-2">
+                        <input type="text" value="" placeholder="คงเหลือ (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-green-700">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('total-items-count').innerText = totalMg.toFixed(0);
+            updateResidualHeader();
+            lucide.createIcons({ root: tbody });
+        }
+
+        function getVolumeCellHtml(calc) {
+            const usedRes = parseFloat(calc.usedFromResidual || 0);
+            const req = parseFloat(calc.requiredMl || 0);
+            const left = parseFloat(calc.leftover || 0);
+            
+            return `
+                <div class="flex flex-col gap-1.5 text-[10px] w-full px-2 font-mono">
+                    <div class="flex justify-between text-gray-500"><span>ยกมา:</span> <span>${usedRes.toFixed(2)}</span></div>
+                    <div class="flex justify-between text-gray-700 font-bold"><span>ใช้ไป:</span> <span>${req.toFixed(2)}</span></div>
+                    <div class="flex justify-between text-blue-800 font-black border-t border-blue-200/50 pt-1 mt-0.5"><span>คงเหลือ:</span> <span>${left.toFixed(2)}</span></div>
+                </div>
+            `;
+        }
+
+        function getStockStatusHtml(calc) {
+            let html = '<div class="flex flex-col gap-1.5">';
+            const usedRes = parseFloat(calc.usedFromResidual || 0);
+            const left = parseFloat(calc.leftover || 0);
+            const neededVials = parseInt(calc.vialsToOpen || 0);
+            const expiredVol = parseFloat(calc.expiredVolume || 0);
+            
+            const now = new Date();
+            const today = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+
+            if (expiredVol > 0) {
+                html += `<div class="stock-card bg-red-50 text-red-700 border-red-200"><i data-lucide="trash-2" class="w-3 h-3"></i> ทิ้งยาเศษหมดอายุ: ${expiredVol.toFixed(2)} ml</div>`;
+            }
+            if (usedRes > 0) {
+                html += `<div class="stock-card card-orange"><i data-lucide="pooling" class="w-3 h-3"></i> ดึงยาเศษ: ${usedRes.toFixed(2)} ml</div>`;
+            }
+            if (neededVials > 0) {
+                html += `<div class="stock-card card-blue"><i data-lucide="package" class="w-3 h-3"></i> เปิดขวดใหม่: ${neededVials} ขวด</div>`;
+            }
+            if (left > 0) {
+                html += `<div class="stock-card card-neon-green"><i data-lucide="sparkles" class="w-3 h-3"></i> เศษใหม่ (${today}): ${left.toFixed(2)} ml</div>`;
+            }
+            
+            // Expiry Alert
+            if (calc.expiryDate) {
+                const dateColor = calc.isExpired ? 'text-red-600 font-black' : (calc.isNearExpiry ? 'text-orange-600 font-bold' : 'text-gray-500');
+                const alertText = calc.isExpired ? ' (หมดอายุ!)' : (calc.isNearExpiry ? ' (ใกล้หมดอายุ)' : '');
+                
+                html += `<div class="text-[9px] mt-1 ${dateColor} border-t border-gray-100 pt-1 px-1">
+                            <i data-lucide="${calc.isExpired ? 'alert-octagon' : 'calendar'}" class="inline w-3 h-3 mr-1"></i>
+                            หมดอายุ: ${calc.expiryDate}${alertText}
+                         </div>`;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function updateRowCalc(orderId, index, input) {
+            const newDose = parseFloat(input.value) || 0;
+            const order = prescriptions[orderId];
+            order.items[index].doseMg = newDose;
+
+            const item = order.items[index];
+            const calc = calculateResidual(item.id, newDose);
+
+            // Update ML in real-time
+            document.getElementById(`vol-cell-${index}`).innerHTML = getVolumeCellHtml(calc);
+            
+            // Update Stock Status in real-time
+            const statusCell = document.getElementById(`stock-status-${index}`);
+            statusCell.innerHTML = getStockStatusHtml(calc);
+            lucide.createIcons({ root: statusCell });
+
+            // Update Total
+            let total = 0;
+            order.items.forEach(it => total += parseFloat(it.doseMg || 0));
+            document.getElementById('total-items-count').innerText = total.toFixed(0);
+        }
+
+        function updateResidualHeader() {
+            let count = 0;
+            for(let key in residualStock) {
+                if(residualStock[key] > 0) count++;
+            }
+            document.getElementById('residual-count').innerText = count;
+        }
+
+        function openResidualModal() {
+            const modal = document.getElementById('residualModal');
+            const tbody = document.getElementById('residual-modal-body');
+            tbody.innerHTML = '';
+
+            let hasResidual = false;
+            for (let key in residualStock) {
+                const vol = residualStock[key];
+                if (vol > 0) {
+                    hasResidual = true;
+                    const drug = drugInventory[key];
+                    const tr = document.createElement('tr');
+                    
+                    // Mock stability status based on some dummy logic
+                    const stabilityColor = vol < 5 ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50';
+                    const stabilityText = vol < 5 ? 'URGENT: Use ASAP' : 'Stable';
+
+                    tr.innerHTML = `
+                        <td class="p-3">
+                            <div class="font-bold text-gray-800">${drug ? drug.name : key}</div>
+                            <div class="text-[10px] text-gray-400 font-mono">${key}</div>
+                        </td>
+                        <td class="p-3 text-center font-black text-lg text-blue-900">${vol.toFixed(2)}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-[9px] font-black uppercase ${stabilityColor}">${stabilityText}</span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            }
+
+            if (!hasResidual) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-gray-400 font-bold italic">ไม่มียาเศษในระบบ</td></tr>';
+            }
+
+            lucide.createIcons({ root: modal });
+            modal.classList.add('active');
+        }
+
+        function closeResidualModal() {
+            document.getElementById('residualModal').classList.remove('active');
+        }
+
+        function openHadModal() {
+            const orderNo = document.getElementById('order-no').value;
+            const data = prescriptions[orderNo];
+            if (!data || data.items.length === 0) return;
+            
+            // Show first item code as hint
+            document.getElementById('presc-code-hint').innerText = `EXPECTED: ${data.items[0].id}`;
+            document.getElementById('stock-code-verify').value = '';
+
+            const modal = document.getElementById('hadModal');
+            document.querySelectorAll('.had-check-item').forEach(cb => {
+                cb.checked = false;
+                cb.onchange = checkHadInputs;
+            });
+            document.getElementById('stock-code-verify').oninput = checkHadInputs;
+
+            document.getElementById('verify-had-btn').disabled = true;
+            document.getElementById('verify-had-btn').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            lucide.createIcons({ root: modal });
+            modal.classList.add('active');
+        }
+
+        function checkHadInputs() {
+            const orderNo = document.getElementById('order-no').value;
+            const data = prescriptions[orderNo];
+            const expectedCode = data.items[0].id;
+            const enteredCode = document.getElementById('stock-code-verify').value.trim();
+
+            const allChecked = Array.from(document.querySelectorAll('.had-check-item')).every(cb => cb.checked);
+            const codeMatches = enteredCode === expectedCode;
+
+            const btn = document.getElementById('verify-had-btn');
+            if (allChecked && codeMatches) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.classList.add('hover:bg-red-700');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function verifyHad() {
+            closeHadModal();
+            const confirmBtn = document.getElementById('confirm-dispense-btn');
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove('bg-gray-400', 'opacity-50', 'cursor-not-allowed');
+            confirmBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'shadow-lg');
+            
+            const hadBtn = document.getElementById('had-check-btn');
+            hadBtn.innerHTML = '<i data-lucide="shield-check" class="w-4 h-4"></i> HAD Verified';
+            hadBtn.className = "bg-green-600 text-white px-6 py-2 rounded shadow-lg font-bold flex items-center gap-2 cursor-default pointer-events-none";
+            
+            lucide.createIcons({ root: document.body });
+            showNotice('ตรวจสอบความเสี่ยง (HAD Check) เรียบร้อยแล้ว ปุ่มยืนยันพร้อมใช้งาน', 'success');
+        }
+
+        function closeHadModal() {
+            document.getElementById('hadModal').classList.remove('active');
+        }
+
+        function goToDispense() {
+            const orderNo = document.getElementById('order-no').value;
+            const data = prescriptions[orderNo];
+            if (!data) return;
+
+            // 1. Stock Sufficiency Check
+            let stockIsEnough = true;
+            let missingDrug = "";
+            data.items.forEach(item => {
+                const calc = calculateResidual(item.id, item.doseMg);
+                const availableVials = item.id === 'PD-00010' ? 0 : 50; 
+                if (calc.vialsToOpen > availableVials && parseFloat(calc.usedFromResidual) < parseFloat(calc.requiredMl)) {
+                    stockIsEnough = false;
+                    missingDrug = item.name;
+                }
+            });
+
+            if (!stockIsEnough) {
+                showNotice(`⚠️ ยา [${missingDrug}] ในสต็อกไม่เพียงพอ`, 'error');
+                return;
+            }
+
+            // 2. Execute Updates & Persistence
+            let calculatedItems = [];
+            
+            data.items.forEach(item => {
+                const calc = calculateResidual(item.id, item.doseMg);
+                const drug = drugInventory[item.id];
+                
+                // Update Residual Pool
+                let resData = residualStock[item.id] || { volume: 0 };
+                let currentResVol = resData.volume;
+                
+                // If the old residual was expired, discard it.
+                if (calc.isExpired) {
+                    currentResVol = 0; 
+                }
+
+                if (parseFloat(calc.usedFromResidual) > 0) {
+                    currentResVol = Math.max(0, currentResVol - parseFloat(calc.usedFromResidual));
+                }
+                
+                // Set the new residual value and dates
+                if (parseFloat(calc.leftover) > 0) {
+                    currentResVol += parseFloat(calc.leftover);
+                    
+                    // Generate new expiry date (e.g. 1 month from now)
+                    const now = new Date();
+                    const exp = new Date();
+                    exp.setMonth(now.getMonth() + 1);
+                    
+                    resData.openDate = now.toISOString().split('T')[0];
+                    resData.expiryDate = exp.toISOString().split('T')[0];
+                }
+                
+                resData.volume = currentResVol;
+                residualStock[item.id] = resData;
+
+                // Simulate Inventory Deduction (Vials)
+                console.log(`[Inventory] Deducting ${calc.vialsToOpen} vials of ${item.id}`);
+
+                // Store calculated data
+                calculatedItems.push({
+                    ...item,
+                    volumeMl: calc.requiredMl,
+                    vialsUsed: calc.vialsToOpen,
+                    residualSource: calc.usedFromResidual,
+                    newResidual: calc.leftover
+                });
+
+                // Check Accumulation Alert
+                if (drug && residualStock[item.id] >= drug.totalVol) {
+                    showNotice(`💡 [${item.name}] สะสมครบขวดเต็ม`, 'info');
+                }
+            });
+
+            // Update order status
+            prescriptions[orderNo].status = "คำนวณแล้ว";
+            document.getElementById('order-status').innerText = "คำนวณแล้ว";
+
+            // Save to localStorage for prescription.html
+            const dispensePayload = {
+                orderNo: orderNo,
+                patient: data.patient,
+                hn: data.hn,
+                doctor: data.doctor,
+                items: calculatedItems,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('currentDispense', JSON.stringify(dispensePayload));
+
+            updateResidualHeader();
+
+            // 4. UI Feedback (Antigravity Style)
+            showAntigravityNotice('บันทึกการคำนวณสำเร็จ • เตรียมจ่ายยา (Antigravity Protocol Active)');
+            
+            setTimeout(() => {
+                window.location.href = `prescription.html?hn=${data.hn}&order=${orderNo}`;
+            }, 2500);
+        }
+
+        function showAntigravityNotice(msg) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-8 right-8 antigravity-notice px-8 py-4 rounded-lg z-[200] flex items-center gap-4 transform translate-y-20 opacity-0 transition-all duration-500";
+            toast.innerHTML = `
+                <div class="bg-green-500/20 p-2 rounded-full"><i data-lucide="check-square" class="w-6 h-6 text-green-400"></i></div>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-green-500/60 mb-1">System Status: Success</p>
+                    <p class="font-black text-sm">${msg}</p>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            lucide.createIcons({ root: toast });
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-20', 'opacity-0');
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+
+
+        function searchPrescriptions(val) {
+            const rows = document.querySelectorAll('#prescription-list-body tr');
+            val = val.toLowerCase();
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(val) ? '' : 'none';
+            });
+        }
+
+
+    </script>
+</body>
+</html>
