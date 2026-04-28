@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตรวจสอบสถานะยา - Chemotherapy Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Session Check
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f9; opacity: 0; transition: opacity 0.4s ease-in-out; }
+        body.ready { opacity: 1; }
+        .office-header { background: linear-gradient(to right, #1e3a8a, #2563eb); }
+        .office-card { background: white; border-radius: 4px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .office-table thead { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; }
+        .office-table th, .office-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
+        .office-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.5rem; font-size: 0.875rem; transition: all 0.2s; }
+        .office-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px #dbeafe; outline: none; }
+        .active-link { background-color: #eff6ff; color: #1e3a8a; font-weight: 700; border-left: 4px solid #1e3a8a !important; }
+        nav a, nav div { border-left: 4px solid transparent; border-radius: 8px; transition: all 0.2s; }
+        .lucide { width: 18px; height: 18px; }
+        
+        /* Scrollbar styles for office look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Icon Flash Prevention */
+        [data-lucide] { visibility: hidden; }
+        .lucide { visibility: visible !important; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-base">
+
+    <aside class="w-64 bg-white border-r flex flex-col shrink-0 sticky top-0 h-screen overflow-y-auto z-20">
+        <div class="p-6">
+            <h1 class="text-blue-900 font-bold text-lg leading-tight">ระบบจัดการยาเคมีบำบัด</h1>
+            <p class="text-gray-400 text-xs uppercase tracking-wider">CHEMO PHARMACY</p>
+        </div>
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="receive.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="clipboard-list" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">เบิก-รับยา</span>
+            </a>
+            <a href="manage.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="file-text" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">การจัดการข้อมูลยา</span>
+            </a>
+            <a href="dispense.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="file-edit" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการใบสั่งยา</span>
+            </a>
+            <a href="prescription.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="pill" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จ่ายยา</span>
+            </a>
+            <a href="patients.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="users" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการรายชื่อผู้ป่วย</span>
+            </a>
+            <div class="flex items-center p-3 active-link">
+                <i data-lucide="search" class="w-5 h-5 flex-shrink-0 mr-3 text-blue-900"></i>
+                <span class="text-sm font-bold">ตรวจสอบสถานะยา</span>
+            </div>
+            <a href="report.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group">
+                <i data-lucide="bar-chart-2" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดพิมพ์รายงาน</span>
+            </a>
+            <a href="users.html" id="nav-users" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition group hidden">
+                <i data-lucide="users-2" class="w-5 h-5 flex-shrink-0 mr-3 text-gray-400 group-hover:text-blue-600 transition"></i>
+                <span class="text-sm font-medium">จัดการผู้ใช้งาน</span>
+            </a>
+        </nav>
+        <div onclick="checkSupervisor()" class="p-4 border-t flex items-center bg-gray-50 mt-auto cursor-pointer hover:bg-blue-50 transition-colors group">
+            <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=2563eb&color=fff" class="w-10 h-10 rounded-full mr-3 border border-gray-200 shadow-sm group-hover:scale-105 transition-transform">
+            <div class="flex-1 min-w-0">
+                <p id="user-fullname" class="text-sm font-bold text-gray-700 truncate">...</p>
+                <div class="flex items-center gap-1">
+                    <p id="user-role" class="text-xs text-gray-500 uppercase font-bold">...</p>
+                    <i id="override-icon" data-lucide="lock" class="w-2.5 h-2.5 text-gray-400 hidden"></i>
+                </div>
+            </div>
+            <button onclick="event.stopPropagation(); logout()" class="text-gray-400 hover:text-red-500 transition ml-2">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#f1f5f9]">
+        <header class="office-header text-white px-8 py-4 flex justify-between items-center shrink-0 shadow-lg z-10">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i data-lucide="search" class="w-6 h-6"></i></div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight leading-none">ตรวจสอบสถานะยาคงคลัง</h1>
+                    <p class="text-[10px] text-blue-100 uppercase tracking-widest mt-1 opacity-80">Inventory Monitoring</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="location.reload()" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border border-white/20">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> โหลดข้อมูลใหม่
+                </button>
+                <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-sm">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> ส่งออก Excel
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 p-4 flex gap-4 overflow-hidden">
+            
+            <!-- Left Panel: Professional Filter & Dashboard -->
+            <div class="w-72 flex flex-col gap-3 shrink-0 overflow-y-auto pr-1">
+                
+                <!-- Filter Section -->
+                <div class="office-card flex flex-col bg-white shrink-0 shadow-sm border-t-4 border-t-blue-600">
+                    <div class="p-3 bg-gray-50 border-b border-gray-200">
+                        <h3 class="text-xs font-bold text-gray-700 flex items-center gap-2"><i data-lucide="filter" class="w-4 h-4 text-blue-600"></i> ตัวกรองและค้นหา (Filters)</h3>
+                    </div>
+                    <div class="p-3 space-y-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">ค้นหา (Search)</label>
+                            <div class="relative mt-1">
+                                <input type="text" id="searchInput" oninput="applyFilters()" placeholder="ชื่อยา, รหัส, Lot..." class="office-input w-full p-1.5 pr-7 text-[11px] bg-white focus:ring-1 focus:ring-blue-500">
+                                <i data-lucide="search" class="absolute right-2 top-2 text-gray-400 w-3 h-3"></i>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">สถานะสินค้า</label>
+                                <select id="statusFilter" onchange="applyFilters()" class="office-input w-full p-1.5 text-[11px] bg-white mt-1 cursor-pointer">
+                                    <option value="">แสดงสถานะทั้งหมด</option>
+                                    <option value="">🟢 ปกติ</option>
+                                    <option value="">🟠 ใกล้หมดสต็อก</option>
+                                    <option value="">🔴 สินค้าหมด</option>
+                                    <option value="">🟣 ใกล้หมดอายุ</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">สถานที่เก็บ</label>
+                                <select id="storageFilter" onchange="applyFilters()" class="office-input w-full p-1.5 text-[11px] bg-white mt-1 cursor-pointer">
+                                    <option value="">แสดงสถานที่เก็บทั้งหมด</option>
+                                    <option value="">🌡️ อุณหภูมิห้อง</option>
+                                    <option value="">❄️ เก็บในตู้เย็น</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dense Dashboard Summary -->
+                <div class="office-card flex flex-col bg-white shrink-0 shadow-sm border-t-4 border-t-gray-400">
+                    <div class="p-3 bg-gray-50 border-b border-gray-200">
+                        <h3 class="text-xs font-bold text-gray-700 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-gray-600"></i> สรุปสถานะคลังยา</h3>
+                    </div>
+                    <div class="p-0 flex flex-col divide-y divide-gray-100">
+                        <div class="p-3 flex items-center justify-between hover:bg-gray-50 transition">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600"><i data-lucide="package" class="w-3.5 h-3.5"></i></div>
+                                <span class="text-[11px] font-bold text-gray-600">รายการยาทั้งหมด</span>
+                            </div>
+                            <span class="text-sm font-black text-blue-900">125</span>
+                        </div>
+                        <div class="p-3 flex items-center justify-between hover:bg-gray-50 transition">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded bg-orange-100 flex items-center justify-center text-orange-600"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i></div>
+                                <span class="text-[11px] font-bold text-gray-600">ใกล้หมดสต็อก</span>
+                            </div>
+                            <span class="text-sm font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded">8</span>
+                        </div>
+                        <div class="p-3 flex items-center justify-between hover:bg-gray-50 transition">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded bg-red-100 flex items-center justify-center text-red-600"><i data-lucide="x-circle" class="w-3.5 h-3.5"></i></div>
+                                <span class="text-[11px] font-bold text-gray-600">สินค้าหมด (Out)</span>
+                            </div>
+                            <span class="text-sm font-black text-red-600 bg-red-50 px-2 py-0.5 rounded">2</span>
+                        </div>
+                        <div class="p-3 flex items-center justify-between hover:bg-gray-50 transition">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded bg-purple-100 flex items-center justify-center text-purple-600"><i data-lucide="calendar-off" class="w-3.5 h-3.5"></i></div>
+                                <span class="text-[11px] font-bold text-gray-600">ยาใกล้หมดอายุ</span>
+                            </div>
+                            <span class="text-sm font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded">3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Data Table -->
+            <div class="flex-1 office-card flex flex-col bg-white overflow-hidden shadow-sm">
+                <div class="bg-blue-50/50 border-b border-gray-200 p-2.5 flex justify-between items-center shrink-0">
+                    <div class="flex items-center gap-4">
+                        <h2 class="text-[11px] font-bold text-blue-900 flex items-center gap-2 uppercase tracking-wide">
+                            <i data-lucide="database" class="w-4 h-4 text-blue-600"></i> ทะเบียนสินค้าคงคลัง (Inventory Register)
+                        </h2>
+                    </div>
+                    <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 border border-green-200 rounded flex items-center gap-1">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Live Sync Active
+                    </span>
+                </div>
+                
+                <div class="flex-1 overflow-x-auto overflow-y-auto">
+                    <table class="w-full office-table text-[11px]">
+                        <thead class="sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="p-2.5 w-24 text-center">รหัสยา</th>
+                                <th class="p-2.5 text-left">ชื่อยา / Lot No. / EXP</th>
+                                <th class="p-2.5 w-28 text-center">สถานที่เก็บ</th>
+                                <th class="p-2.5 w-24 text-right bg-blue-50/50">คงเหลือ (ขวด)</th>
+                                <th class="p-2.5 w-24 text-right bg-orange-50/50">เศษเหลือ (ml)</th>
+                                <th class="p-2.5 w-28 text-center">สถานะ</th>
+                                <th class="p-2.5 text-left">หมายเหตุ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function applyFilters() {
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+            const statusValue = document.getElementById('statusFilter').value;
+            const storageValue = document.getElementById('storageFilter').value;
+            const rows = document.querySelectorAll('#inventory-table-body tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const statusBadge = row.querySelector('span[class*="bg-"]').innerText;
+                const storageBadge = row.getAttribute('data-storage');
+                
+                const matchSearch = text.includes(searchValue);
+                const matchStatus = (statusValue === 'all' || statusBadge.includes(statusValue));
+                const matchStorage = (storageValue === 'all' || storageBadge === storageValue);
+
+                if (matchSearch && matchStatus && matchStorage) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Inventory Data
+        const inventoryData = [
+            {
+                code: 'CYPH-001',
+                name: 'Cyclophosphamide 500mg',
+                lotNo: 'LOT670012',
+                expDate: '31/12/2024',
+                storage: 'room',
+                vials: 45,
+                ml: 0.00,
+                status: 'normal',
+                notes: 'ปกติ'
+            },
+            {
+                code: 'DOXO-002',
+                name: 'Doxorubicin 50mg',
+                lotNo: 'DX-2024-88',
+                expDate: '15/06/2024',
+                storage: 'room',
+                vials: 22,
+                ml: 12.50,
+                status: 'near_exp',
+                notes: 'ใกล้หมดอายุ'
+            },
+            {
+                code: 'PACT-003',
+                name: 'Paclitaxel 300mg',
+                lotNo: 'PXL-300-99',
+                expDate: '20/09/2024',
+                storage: 'room',
+                vials: 30,
+                ml: 0.00,
+                status: 'normal',
+                notes: 'ปกติ'
+            },
+            {
+                code: '5FU-004',
+                name: '5-Fluorouracil 1000mg',
+                lotNo: 'FU-1G-2024',
+                expDate: '01/01/2025',
+                storage: 'room',
+                vials: 18,
+                ml: 45.00,
+                status: 'normal',
+                notes: 'ปกติ'
+            },
+            {
+                code: 'TAXA-005',
+                name: 'Taxotere 20mg',
+                lotNo: 'TAX-2024-55',
+                expDate: '10/05/2026',
+                storage: 'fridge',
+                vials: 8,
+                ml: 2.30,
+                status: 'low_stock',
+                notes: 'ใกล้หมดสต็อก'
+            },
+            {
+                code: 'CARCA-006',
+                name: 'Carboplatin 150mg',
+                lotNo: 'CARB-2024-12',
+                expDate: '15/03/2024',
+                storage: 'room',
+                vials: 0,
+                ml: 0.00,
+                status: 'out_of_stock',
+                notes: 'สินค้าหมด'
+            },
+            {
+                code: 'IFOS-007',
+                name: 'Ifosfamide 1g',
+                lotNo: 'IFOS-2023-88',
+                expDate: '10/02/2024',
+                storage: 'fridge',
+                vials: 0,
+                ml: 0.00,
+                status: 'expired',
+                notes: 'หมดอายุ'
+            },
+            {
+                code: 'ETAN-008',
+                name: 'Etoposide 100mg',
+                lotNo: 'ETAN-2025-33',
+                expDate: '25/05/2026',
+                storage: 'fridge',
+                vials: 12,
+                ml: 5.60,
+                status: 'normal',
+                notes: 'ปกติ'
+            },
+            {
+                code: 'METRO-009',
+                name: 'Methotrexate 50mg',
+                lotNo: 'METRO-2024-99',
+                expDate: '08/06/2024',
+                storage: 'room',
+                vials: 3,
+                ml: 1.20,
+                status: 'near_exp',
+                notes: 'ใกล้หมดอายุ'
+            },
+            {
+                code: 'BLEO-010',
+                name: 'Bleomycin 15mg',
+                lotNo: 'BLEO-2025-44',
+                expDate: '12/07/2026',
+                storage: 'fridge',
+                vials: 25,
+                ml: 8.90,
+                status: 'normal',
+                notes: 'ปกติ'
+            }
+        ];
+
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+
+            inventoryData.forEach((item, index) => {
+                let statusColor = '';
+                let statusIcon = '';
+                let statusText = '';
+
+                switch(item.status) {
+                    case 'normal':
+                        statusColor = 'bg-green-100 text-green-800';
+                        statusIcon = '✓';
+                        statusText = 'ปกติ (Normal)';
+                        break;
+                    case 'low_stock':
+                        statusColor = 'bg-orange-100 text-orange-800';
+                        statusIcon = '⚠';
+                        statusText = 'ใกล้หมดสต็อก';
+                        break;
+                    case 'out_of_stock':
+                        statusColor = 'bg-red-100 text-red-800';
+                        statusIcon = '✕';
+                        statusText = 'สินค้าหมด (Out)';
+                        break;
+                    case 'near_exp':
+                        statusColor = 'bg-purple-100 text-purple-800';
+                        statusIcon = '⏰';
+                        statusText = 'ใกล้หมดอายุ';
+                        break;
+                    case 'expired':
+                        statusColor = 'bg-gray-100 text-gray-800';
+                        statusIcon = '✕';
+                        statusText = 'หมดอายุ';
+                        break;
+                }
+
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-blue-50/30 transition';
+                row.setAttribute('data-storage', item.storage);
+                row.innerHTML = `
+                    <td class="p-2.5 text-center font-mono text-[10px] text-gray-500">${item.code}</td>
+                    <td class="p-2.5">
+                        <div class="font-bold text-gray-800 text-[11px]">${item.name}</div>
+                        <div class="text-[10px] text-gray-500 mt-0.5">LOT: <span class="font-mono">${item.lotNo}</span></div>
+                        <div class="text-[10px] text-gray-500">EXP: <span class="font-bold">${item.expDate}</span></div>
+                    </td>
+                    <td class="p-2.5 text-center text-[10px]">
+                        <span class="px-2 py-1 rounded bg-gray-100 text-gray-700 font-medium">
+                            ${item.storage === 'room' ? '🌡️ ห้อง' : '❄️ ตู้เย็น'}
+                        </span>
+                    </td>
+                    <td class="p-2.5 text-right font-bold text-gray-800 bg-blue-50/30">${item.vials}</td>
+                    <td class="p-2.5 text-right font-bold text-blue-600 bg-orange-50/30">${item.ml.toFixed(2)}</td>
+                    <td class="p-2.5 text-center">
+                        <span class="px-2.5 py-1 rounded text-[10px] font-bold ${statusColor}">
+                            ${statusIcon} ${statusText}
+                        </span>
+                    </td>
+                    <td class="p-2.5 text-[10px] text-gray-600">${item.notes}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function searchInventory(val) {
+            applyFilters();
+        }
+
+        function filterStatus(val) {
+            applyFilters();
+        }
+
+        function filterStorage(val) {
+            applyFilters();
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+            
+            if (currentUser) {
+                const fullNameEl = document.getElementById('user-fullname');
+                const roleEl = document.getElementById('user-role');
+                const avatarEl = document.getElementById('user-avatar');
+                const navUsers = document.getElementById('nav-users');
+
+                if (fullNameEl) fullNameEl.textContent = currentUser.fullname;
+                if (roleEl) roleEl.textContent = currentUser.role;
+                if (avatarEl) avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.fullname)}&background=2563eb&color=fff`;
+
+                if (currentUser.role === 'Senior Pharmacist') {
+                    if (navUsers) navUsers.classList.remove('hidden');
+                }
+            }
+
+            document.body.classList.add("ready"); 
+            renderInventoryTable();
+        };
+    </script>
+</body>
+</html>

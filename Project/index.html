@@ -1,0 +1,292 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemotherapy Management - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-slate-800">
+
+    <!-- Sidebar -->
+    <aside
+        class="w-72 bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10">
+        <div class="p-8 pb-6">
+            <h1 class="text-[#1e3a8a] font-bold text-xl leading-tight tracking-wide">ระบบจัดการยาเคมีบำบัด</h1>
+            <p class="text-slate-400 text-xs mt-1 font-medium tracking-wider uppercase">Chemotherapy Management</p>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-1.5 overflow-y-auto mt-2">
+            <a href="index.html"
+                class="flex items-center px-4 py-3.5 bg-blue-50 text-blue-700 rounded-xl transition-all duration-200 font-medium group relative overflow-hidden">
+                <div class="absolute inset-0 bg-blue-100 opacity-0 group-hover:opacity-50 transition-opacity"></div>
+                <svg class="w-5 h-5 mr-3 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                    </path>
+                </svg>
+                <span class="relative z-10">หน้าหลัก</span>
+            </a>
+
+            <a href="manage.html"
+                class="flex items-center px-4 py-3.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all duration-200 font-medium">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+                <span>การจัดการข้อมูลยา</span>
+            </a>
+
+            <a href="#"
+                class="flex items-center px-4 py-3.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all duration-200 font-medium">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                    </path>
+                </svg>
+                <span>ตรวจสอบสถานะยา</span>
+            </a>
+
+            <a href="#"
+                class="flex items-center px-4 py-3.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all duration-200 font-medium">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                    </path>
+                </svg>
+                <span>จัดการรายชื่อผู้ป่วย</span>
+            </a>
+
+            <a href="#"
+                class="flex items-center px-4 py-3.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all duration-200 font-medium">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                    </path>
+                </svg>
+                <span>จัดพิมพ์รายงาน</span>
+            </a>
+        </nav>
+
+        <div class="p-5 border-t border-slate-100 bg-white">
+            <div class="flex items-center p-3 rounded-xl hover:bg-slate-50 transition cursor-pointer">
+                <div
+                    class="w-10 h-10 bg-gradient-to-tr from-blue-200 to-indigo-200 rounded-full mr-3 border-2 border-white shadow-sm">
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-800">เภสัชกร สมมุติ</p>
+                    <p class="text-xs text-slate-500">Admin</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col p-8 lg:p-10 overflow-y-auto bg-slate-50 fade-in">
+        <header class="mb-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Dashboard & Overview</h2>
+                <p class="text-slate-500 mt-1">ภาพรวมระบบจัดการยาเคมีบำบัดประจำวัน</p>
+            </div>
+            <div
+                class="text-sm text-slate-500 font-medium bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
+                อัปเดตล่าสุด: วันนี้, 14:30 น.
+            </div>
+        </header>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div
+                class="bg-white p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center justify-between hover:-translate-y-1 transition-transform duration-300">
+                <div>
+                    <p class="text-slate-500 text-sm font-medium mb-1">ยอดรวมยาทั้งหมด</p>
+                    <p class="text-3xl font-bold text-slate-800">1,240</p>
+                </div>
+                <div
+                    class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
+                    <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+
+            <div
+                class="bg-white p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center justify-between hover:-translate-y-1 transition-transform duration-300">
+                <div>
+                    <p class="text-slate-500 text-sm font-medium mb-1">ยอดคงเหลือต่ำ</p>
+                    <p class="text-3xl font-bold text-rose-500">12</p>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center border border-rose-100">
+                    <svg class="w-7 h-7 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <div
+                class="bg-white p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center justify-between hover:-translate-y-1 transition-transform duration-300">
+                <div>
+                    <p class="text-slate-500 text-sm font-medium mb-1">ยอดรวมวันนี้</p>
+                    <p class="text-3xl font-bold text-blue-600">85</p>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                    <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 flex flex-col overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
+                <h3 class="font-semibold text-lg text-slate-800">รายการยาล่าสุด</h3>
+                <div class="relative w-72">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text" placeholder="ค้นหาชื่อยา, LOT..."
+                        class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder-slate-400">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider sticky top-0 z-10">
+                        <tr>
+                            <th class="p-4 pl-6 font-semibold">ชื่อยา</th>
+                            <th class="p-4 font-semibold">LOT</th>
+                            <th class="p-4 font-semibold">วันหมดอายุ</th>
+                            <th class="p-4 font-semibold">จำนวน</th>
+                            <th class="p-4 font-semibold">สถานะ</th>
+                            <th class="p-4 pr-6 font-semibold">ผู้ตรวจสอบ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        <tr class="hover:bg-slate-50/50 transition duration-150 group">
+                            <td class="p-4 pl-6 font-medium text-slate-800 flex items-center">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mr-3 border border-indigo-100 font-bold text-xs">
+                                    AT</div>
+                                Atorvastatin (LOT A123)
+                            </td>
+                            <td class="p-4 text-slate-600">LOT A123</td>
+                            <td class="p-4 text-slate-600">12/03/2024</td>
+                            <td class="p-4 font-medium text-slate-700">100</td>
+                            <td class="p-4">
+                                <span
+                                    class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">ปกติ</span>
+                            </td>
+                            <td class="p-4 pr-6 text-slate-500 flex items-center">
+                                <div class="w-6 h-6 rounded-full bg-slate-200 mr-2"></div>
+                                ภก. สมมุติ
+                            </td>
+                        </tr>
+                        <!-- Empty rows for design padding -->
+                        <tr class="h-14 hover:bg-slate-50/50 transition duration-150">
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="h-14 hover:bg-slate-50/50 transition duration-150">
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="h-14 hover:bg-slate-50/50 transition duration-150">
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="h-14 hover:bg-slate-50/50 transition duration-150">
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div
+                class="p-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500 bg-slate-50/50">
+                <span>แสดง 1-5 จาก 1,240 รายการ</span>
+                <div class="flex space-x-1">
+                    <button
+                        class="px-3 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50">&lt;</button>
+                    <button class="px-3 py-1 rounded-md bg-blue-600 text-white font-medium">1</button>
+                    <button class="px-3 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50">2</button>
+                    <button class="px-3 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50">3</button>
+                    <button
+                        class="px-3 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50">&gt;</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+
+</html>

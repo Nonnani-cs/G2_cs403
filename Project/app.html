@@ -1,0 +1,625 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemotherapy Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a237e;
+            --primary-light: #534bae;
+            --primary-dark: #000051;
+            --secondary: #f3f4f6;
+        }
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f8fafc; 
+            color: #334155;
+        }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Component Styles */
+        .nav-item.active {
+            background-color: #e0e7ff;
+            color: var(--primary);
+            font-weight: 600;
+            border-right: 4px solid var(--primary);
+        }
+        .nav-item.active svg { color: var(--primary); }
+        
+        .wizard-tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            font-weight: 600;
+        }
+        
+        .input-error { border-color: #ef4444 !important; }
+        .error-msg { color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm z-20">
+        <div class="p-6 border-b border-slate-100 flex flex-col items-center justify-center text-center">
+            <div class="w-12 h-12 bg-[#1a237e] rounded-xl flex items-center justify-center shadow-md mb-3">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            </div>
+            <h1 class="text-[#1a237e] font-bold text-lg leading-tight">ระบบจัดการสต็อกยา<br>เคมีบำบัด</h1>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4" id="sidebar-nav">
+            <a href="#" onclick="navigate('view-dashboard', this)" class="nav-item active flex items-center px-6 py-3.5 text-slate-600 hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span>หน้าหลัก</span>
+            </a>
+            <a href="#" onclick="navigate('view-wizard', this)" class="nav-item flex items-center px-6 py-3.5 text-slate-600 hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <span>กระบวนการจัดการยา</span>
+            </a>
+            <a href="#" onclick="navigate('view-status', this)" class="nav-item flex items-center px-6 py-3.5 text-slate-600 hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>ตรวจสอบสถานะยา</span>
+            </a>
+            <a href="#" onclick="navigate('view-patients', this)" class="nav-item flex items-center px-6 py-3.5 text-slate-600 hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span>จัดการรายชื่อผู้ป่วย</span>
+            </a>
+            <a href="#" onclick="navigate('view-reports', this)" class="nav-item flex items-center px-6 py-3.5 text-slate-600 hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>จัดพิมพ์รายงาน</span>
+            </a>
+            <a href="#" onclick="navigate('view-users', this)" class="nav-item flex items-center px-6 py-3.5 text-slate-600 hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span>จัดการผู้ใช้</span>
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-100 bg-slate-50 mt-auto">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-[#1a237e] text-white rounded-full flex items-center justify-center mr-3 font-bold shadow-sm">ภก</div>
+                <div>
+                    <p class="text-sm font-bold text-[#1a237e]">เภสัชกร สมมุติ</p>
+                    <p class="text-xs text-slate-500">Pharmacist / Admin</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        
+        <!-- View: Dashboard -->
+        <div id="view-dashboard" class="app-view h-full flex flex-col overflow-y-auto fade-in">
+            <header class="bg-white px-8 py-6 border-b border-slate-200 flex justify-between items-center shadow-sm">
+                <div>
+                    <h2 class="text-2xl font-bold text-[#1a237e]">หน้าหลัก (Dashboard)</h2>
+                    <p class="text-slate-500 text-sm mt-1">ภาพรวมและสถานะระบบจัดการสต็อกยาเคมีบำบัด</p>
+                </div>
+                <div class="text-sm text-slate-500 bg-slate-100 px-4 py-2 rounded-lg font-medium border border-slate-200">
+                    อัปเดตล่าสุด: <span id="current-time"></span>
+                </div>
+            </header>
+            <div class="p-8">
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between border-l-4 border-l-[#1a237e]">
+                        <div>
+                            <p class="text-slate-500 text-sm font-medium mb-1">ยอดรวมยาทั้งหมด</p>
+                            <p class="text-3xl font-bold text-slate-800">1,420</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center"><span class="text-2xl">📦</span></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between border-l-4 border-l-rose-500">
+                        <div>
+                            <p class="text-slate-500 text-sm font-medium mb-1">ยาคงเหลือน้อย</p>
+                            <p class="text-3xl font-bold text-rose-600">8</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center"><span class="text-2xl">📉</span></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between border-l-4 border-l-emerald-500">
+                        <div>
+                            <p class="text-slate-500 text-sm font-medium mb-1">ยอดรับวันนี้</p>
+                            <p class="text-3xl font-bold text-emerald-600">45</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center"><span class="text-2xl">📥</span></div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-700">รายการความเคลื่อนไหวล่าสุด</h3>
+                        <button class="text-sm text-[#1a237e] font-medium hover:underline">ดูทั้งหมด</button>
+                    </div>
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-white border-b text-slate-500">
+                            <tr>
+                                <th class="p-4 font-semibold">เวลา</th>
+                                <th class="p-4 font-semibold">ประเภท</th>
+                                <th class="p-4 font-semibold">ชื่อยา</th>
+                                <th class="p-4 font-semibold">จำนวน</th>
+                                <th class="p-4 font-semibold">ผู้ทำรายการ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr><td class="p-4 text-slate-500">10:30</td><td class="p-4"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-bold">รับเข้า</span></td><td class="p-4 font-medium">Cisplatin 50mg</td><td class="p-4 font-bold text-emerald-600">+10</td><td class="p-4 text-slate-600">ภก. สมมุติ</td></tr>
+                            <tr><td class="p-4 text-slate-500">09:15</td><td class="p-4"><span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-bold">จ่ายออก</span></td><td class="p-4 font-medium">Doxorubicin</td><td class="p-4 font-bold text-amber-600">-2</td><td class="p-4 text-slate-600">ภก. สมมุติ</td></tr>
+                            <tr><td class="p-4 text-slate-500">08:40</td><td class="p-4"><span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-bold">จ่ายออก</span></td><td class="p-4 font-medium">Fluorouracil</td><td class="p-4 font-bold text-amber-600">-5</td><td class="p-4 text-slate-600">ภก. สมใจ</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Wizard (กระบวนการจัดการยา) -->
+        <div id="view-wizard" class="app-view hidden h-full flex flex-col fade-in bg-white">
+            <!-- Wizard Header Tabs -->
+            <div class="flex border-b border-slate-200 bg-slate-50">
+                <div id="tab-1" onclick="goToStep(1)" class="wizard-tab active flex-1 text-center py-4 text-sm font-medium border-b-2 text-slate-500 border-transparent transition-all cursor-pointer hover:text-[#1a237e]">1. จัดการข้อมูลยา</div>
+                <div id="tab-2" onclick="goToStep(2)" class="wizard-tab flex-1 text-center py-4 text-sm font-medium border-b-2 text-slate-500 border-transparent transition-all cursor-pointer hover:text-[#1a237e]">2. เบิก-รับยา</div>
+                <div id="tab-3" onclick="goToStep(3)" class="wizard-tab flex-1 text-center py-4 text-sm font-medium border-b-2 text-slate-500 border-transparent transition-all cursor-pointer hover:text-[#1a237e]">3. จัดการใบสั่งยา</div>
+                <div id="tab-4" onclick="goToStep(4)" class="wizard-tab flex-1 text-center py-4 text-sm font-medium border-b-2 text-slate-500 border-transparent transition-all cursor-pointer hover:text-[#1a237e]">4. จ่ายยา</div>
+            </div>
+
+            <!-- Step Content Area -->
+            <div class="flex-1 overflow-y-auto p-8 bg-slate-50 relative">
+                
+                <!-- STEP 1: จัดการข้อมูลยา -->
+                <div id="step-1" class="wizard-step fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-[#1a237e]">จัดการข้อมูลยาในคลัง</h3>
+                        <button onclick="openAddDrugModal()" class="bg-[#1a237e] text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:bg-[#000051] transition flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            รายการใหม่
+                        </button>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-slate-600 border-b">
+                                <tr><th class="p-4 font-semibold">รหัสยา</th><th class="p-4 font-semibold">ชื่อยา (Generic Name)</th><th class="p-4 font-semibold">รูปแบบ</th><th class="p-4 font-semibold">ขั้นต่ำ</th><th class="p-4 font-semibold text-center">High Alert</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr><td class="p-4 font-mono text-slate-500">DRUG-001</td><td class="p-4 font-medium">Cisplatin</td><td class="p-4">Injection</td><td class="p-4">10</td><td class="p-4 text-center"><span class="px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs font-bold">Yes</span></td></tr>
+                                <tr><td class="p-4 font-mono text-slate-500">DRUG-002</td><td class="p-4 font-medium">Doxorubicin</td><td class="p-4">Injection</td><td class="p-4">5</td><td class="p-4 text-center"><span class="px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs font-bold">Yes</span></td></tr>
+                                <tr><td class="p-4 font-mono text-slate-500">DRUG-003</td><td class="p-4 font-medium">Fluorouracil</td><td class="p-4">Solution</td><td class="p-4">20</td><td class="p-4 text-center"><span class="text-slate-300">-</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- STEP 2: เบิก-รับยา -->
+                <div id="step-2" class="wizard-step hidden fade-in max-w-3xl mx-auto">
+                    <h3 class="text-xl font-bold text-[#1a237e] mb-6">บันทึกการเบิก-รับยา</h3>
+                    <div class="bg-white p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">รายการยา</label>
+                            <select class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-[#1a237e] focus:ring-1 focus:ring-[#1a237e]">
+                                <option>Cisplatin 50mg</option>
+                                <option>Doxorubicin 10mg</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Lot Number</label>
+                                <input type="text" placeholder="ระบุ Lot Number" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-[#1a237e] focus:ring-1 focus:ring-[#1a237e]">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">วันหมดอายุ (EXP)</label>
+                                <input type="date" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-[#1a237e] focus:ring-1 focus:ring-[#1a237e]">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">จำนวนที่รับเข้า</label>
+                            <input type="number" placeholder="0" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-[#1a237e] focus:ring-1 focus:ring-[#1a237e]">
+                        </div>
+                        <button class="w-full bg-emerald-500 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 transition shadow-md">บันทึกรับยา</button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: จัดการใบสั่งยา -->
+                <div id="step-3" class="wizard-step hidden fade-in">
+                    <h3 class="text-xl font-bold text-[#1a237e] mb-6">สร้าง/จัดการใบสั่งยา</h3>
+                    <div class="flex gap-6">
+                        <!-- Patient Info Form -->
+                        <div class="w-1/3 bg-white p-6 border border-slate-200 rounded-2xl shadow-sm">
+                            <h4 class="font-bold text-slate-700 mb-4 border-b pb-2">ข้อมูลผู้ป่วย</h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 mb-1">ค้นหา HN (พิมพ์ 66001234 เพื่อทดสอบ Alert)</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="presc-hn" placeholder="ระบุ HN" class="flex-1 border border-slate-300 rounded-lg p-2 outline-none focus:border-[#1a237e]">
+                                        <button type="button" onclick="loadPatient()" class="bg-slate-200 px-3 rounded-lg hover:bg-slate-300 text-sm font-medium">ค้นหา</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 mb-1">ชื่อ-นามสกุล</label>
+                                    <input type="text" id="presc-name" class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 outline-none" readonly>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 mb-1">น้ำหนัก (kg)</label>
+                                    <input type="text" id="presc-weight" class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 outline-none" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Prescription Form -->
+                        <div class="flex-1 bg-white p-6 border border-slate-200 rounded-2xl shadow-sm">
+                            <h4 class="font-bold text-slate-700 mb-4 border-b pb-2">รายการยาที่สั่ง</h4>
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-1">เลือกยา</label>
+                                        <select id="presc-drug" onchange="checkAllergy()" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-[#1a237e]">
+                                            <option value="">-- เลือกยา --</option>
+                                            <option value="Cisplatin">Cisplatin (ทดสอบแพ้ยา)</option>
+                                            <option value="Fluorouracil">Fluorouracil</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-1">Dose (mg)</label>
+                                        <input type="number" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-[#1a237e]">
+                                    </div>
+                                </div>
+                                <button type="button" class="mt-4 bg-[#1a237e] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#000051] transition">เพิ่มรายการยา</button>
+                                
+                                <!-- Added Items Table -->
+                                <table class="w-full text-sm mt-4 border border-slate-200 rounded-lg overflow-hidden">
+                                    <thead class="bg-slate-50 border-b"><tr><th class="p-2 text-left">ยา</th><th class="p-2 text-left">Dose</th><th class="p-2 text-center">จัดการ</th></tr></thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr><td colspan="3" class="p-4 text-center text-slate-400 italic">ยังไม่มีรายการ</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4: จ่ายยา -->
+                <div id="step-4" class="wizard-step hidden fade-in">
+                    <h3 class="text-xl font-bold text-[#1a237e] mb-6">จ่ายยา (Dispense)</h3>
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-[#1a237e] text-white border-b">
+                                <tr>
+                                    <th class="p-4 font-semibold">ใบสั่งยา</th>
+                                    <th class="p-4 font-semibold">ผู้ป่วย</th>
+                                    <th class="p-4 font-semibold">รายการยา</th>
+                                    <th class="p-4 font-semibold w-32">จำนวนตัดสต็อก</th>
+                                    <th class="p-4 font-semibold text-center">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="p-4 font-mono font-bold text-slate-700">RX-001</td>
+                                    <td class="p-4">นายสมชาย ใจดี (66001234)</td>
+                                    <td class="p-4">Fluorouracil <span class="text-slate-400">x 2 vial</span></td>
+                                    <td class="p-4"><input type="number" value="2" class="w-full border border-slate-300 rounded p-1.5 text-center outline-none"></td>
+                                    <td class="p-4 text-center"><button class="bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-600 shadow-sm transition">ยืนยันจ่ายยา</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Wizard Footer Navigation -->
+            <div class="p-5 border-t border-slate-200 bg-white flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+                <button onclick="prevStep()" id="btn-prev" class="px-8 py-2.5 border border-slate-300 text-slate-600 rounded-xl font-medium hover:bg-slate-50 transition opacity-50 cursor-not-allowed">กลับ</button>
+                <div class="text-sm font-bold text-slate-400" id="step-indicator">ขั้นตอนที่ 1 / 4</div>
+                <button onclick="nextStep()" id="btn-next" class="px-8 py-2.5 bg-[#1a237e] text-white rounded-xl font-medium hover:bg-[#000051] transition shadow-md shadow-[#1a237e]/20">ถัดไป</button>
+            </div>
+        </div>
+
+        <!-- View: Status -->
+        <div id="view-status" class="app-view hidden h-full p-8 overflow-y-auto fade-in">
+            <h2 class="text-2xl font-bold text-[#1a237e] mb-6">ตรวจสอบสถานะยา</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="bg-white p-6 border border-amber-200 rounded-2xl shadow-sm border-l-4 border-l-amber-500">
+                    <h3 class="font-bold text-amber-700 text-lg mb-2 flex items-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>ยาใกล้หมดอายุ (ภายใน 30 วัน)</h3>
+                    <ul class="space-y-2 mt-4 text-sm text-slate-600">
+                        <li class="flex justify-between border-b pb-1"><span>Platinol (LOT123)</span> <span class="font-bold text-amber-600">เหลือ 15 วัน</span></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 border border-rose-200 rounded-2xl shadow-sm border-l-4 border-l-rose-500">
+                    <h3 class="font-bold text-rose-700 text-lg mb-2 flex items-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>ยาหมดอายุ</h3>
+                    <p class="text-sm text-slate-500 mt-4 italic">ไม่มีรายการยาหมดอายุ</p>
+                </div>
+                <div class="bg-white p-6 border border-blue-200 rounded-2xl shadow-sm border-l-4 border-l-blue-500 col-span-2">
+                    <h3 class="font-bold text-blue-700 text-lg mb-2">High Alert Drugs</h3>
+                    <div class="mt-4 flex gap-2 flex-wrap">
+                        <span class="px-3 py-1 bg-rose-100 text-rose-800 rounded-full text-sm font-bold border border-rose-200">Cisplatin</span>
+                        <span class="px-3 py-1 bg-rose-100 text-rose-800 rounded-full text-sm font-bold border border-rose-200">Doxorubicin</span>
+                        <span class="px-3 py-1 bg-rose-100 text-rose-800 rounded-full text-sm font-bold border border-rose-200">Paclitaxel</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Patients -->
+        <div id="view-patients" class="app-view hidden h-full p-8 overflow-y-auto fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-[#1a237e]">จัดการรายชื่อผู้ป่วย</h2>
+                <button class="bg-[#1a237e] text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:bg-[#000051] transition">+ เพิ่มผู้ป่วย</button>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-100 text-slate-600 border-b">
+                        <tr><th class="p-4 font-semibold">HN</th><th class="p-4 font-semibold">ชื่อ-นามสกุล</th><th class="p-4 font-semibold">อายุ</th><th class="p-4 font-semibold">น้ำหนัก</th><th class="p-4 font-semibold">ประวัติแพ้ยา</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr><td class="p-4 font-mono font-bold text-slate-700">66001234</td><td class="p-4">นายสมชาย ใจดี</td><td class="p-4">40 ปี</td><td class="p-4">55 kg</td><td class="p-4"><span class="text-rose-600 font-bold">Cisplatin</span></td></tr>
+                        <tr><td class="p-4 font-mono font-bold text-slate-700">67009876</td><td class="p-4">นางสมหญิง รักดี</td><td class="p-4">35 ปี</td><td class="p-4">48 kg</td><td class="p-4 text-slate-400">ไม่มี</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- View: Reports -->
+        <div id="view-reports" class="app-view hidden h-full p-8 overflow-y-auto fade-in">
+            <h2 class="text-2xl font-bold text-[#1a237e] mb-6">จัดพิมพ์รายงาน</h2>
+            <div class="bg-white p-6 border border-slate-200 rounded-2xl shadow-sm max-w-2xl">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">ประเภทรายงาน</label>
+                        <select class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-[#1a237e]">
+                            <option>รายงานการรับยาเข้า</option>
+                            <option>รายงานการจ่ายยาออก</option>
+                            <option>สรุปสต๊อกยาคงเหลือ</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">ตั้งแต่วันที่</label>
+                            <input type="date" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-[#1a237e]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">ถึงวันที่</label>
+                            <input type="date" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-[#1a237e]">
+                        </div>
+                    </div>
+                    <button class="w-full mt-4 bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 shadow-md">ดาวน์โหลดรายงาน (PDF)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Users -->
+        <div id="view-users" class="app-view hidden h-full p-8 overflow-y-auto fade-in">
+            <h2 class="text-2xl font-bold text-[#1a237e] mb-6">จัดการบัญชีผู้ใช้</h2>
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 text-center text-slate-500">
+                ระบบจัดการสิทธิ์ผู้ใช้งานสำหรับ Admin
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Add Drug -->
+    <div id="modal-add-drug" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-[600px] border border-slate-100 overflow-hidden transform scale-95 transition-transform" id="modal-add-drug-content">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-[#1a237e]">เพิ่มชื่อยาใหม่</h2>
+                <button onclick="closeAddDrugModal()" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <form onsubmit="validateAddDrug(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อยา (Generic Name) *</label>
+                        <input type="text" id="drug-generic" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-[#1a237e]">
+                        <span class="error-msg hidden"></span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อทางการค้า (Trade Name) *</label>
+                        <input type="text" id="drug-trade" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-[#1a237e]">
+                        <span class="error-msg hidden"></span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">รูปแบบยา *</label>
+                        <input type="text" id="drug-form" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-[#1a237e]">
+                        <span class="error-msg hidden"></span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">จำนวนขั้นต่ำ *</label>
+                        <input type="number" id="drug-min" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-[#1a237e]">
+                        <span class="error-msg hidden"></span>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-lg flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-rose-600">High Alert Drug</p>
+                        <p class="text-[10px] text-rose-500">ยาที่ต้องระมัดระวังพิเศษ</p>
+                    </div>
+                    <input type="checkbox" class="w-5 h-5 accent-rose-500 cursor-pointer">
+                </div>
+                <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeAddDrugModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-600 font-medium hover:bg-slate-50">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 bg-[#1a237e] text-white rounded-lg font-medium hover:bg-[#000051]">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Javascript Logic -->
+    <script>
+        // Set Date
+        const now = new Date();
+        document.getElementById('current-time').innerText = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+
+        // Navigation Logic
+        function navigate(viewId, element) {
+            // Hide all views
+            document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+            // Show target view
+            document.getElementById(viewId).classList.remove('hidden');
+            
+            // Update active state in sidebar
+            document.querySelectorAll('.nav-item').forEach(n => {
+                n.classList.remove('active');
+                n.classList.remove('bg-e0e7ff');
+                n.style.borderRight = 'none';
+            });
+            if(element) {
+                element.classList.add('active');
+            }
+        }
+
+        // Wizard Logic
+        let currentStep = 1;
+        const totalSteps = 4;
+        
+        function updateWizardUI() {
+            // Update Tabs
+            document.querySelectorAll('.wizard-tab').forEach((t, index) => {
+                if(index + 1 === currentStep) {
+                    t.classList.add('active');
+                    t.classList.add('border-[#1a237e]');
+                } else {
+                    t.classList.remove('active');
+                    t.classList.remove('border-[#1a237e]');
+                }
+            });
+            
+            // Update Content
+            document.querySelectorAll('.wizard-step').forEach(s => s.classList.add('hidden'));
+            document.getElementById('step-' + currentStep).classList.remove('hidden');
+            
+            // Update Buttons
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            
+            if(currentStep === 1) {
+                btnPrev.classList.add('opacity-50', 'cursor-not-allowed');
+                btnPrev.disabled = true;
+            } else {
+                btnPrev.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnPrev.disabled = false;
+            }
+            
+            if(currentStep === totalSteps) {
+                btnNext.innerHTML = 'เสร็จสิ้น';
+                btnNext.classList.replace('bg-[#1a237e]', 'bg-emerald-500');
+                btnNext.classList.replace('hover:bg-[#000051]', 'hover:bg-emerald-600');
+            } else {
+                btnNext.innerHTML = 'ถัดไป';
+                btnNext.classList.replace('bg-emerald-500', 'bg-[#1a237e]');
+                btnNext.classList.replace('hover:bg-emerald-600', 'hover:bg-[#000051]');
+            }
+            
+            document.getElementById('step-indicator').innerText = `ขั้นตอนที่ ${currentStep} / ${totalSteps}`;
+        }
+        
+        function nextStep() {
+            if(currentStep < totalSteps) {
+                currentStep++;
+                updateWizardUI();
+            } else {
+                alert('เสร็จสิ้นกระบวนการจัดการยา!');
+                navigate('view-dashboard', document.querySelector('.nav-item')); // reset to dashboard
+                currentStep = 1;
+                updateWizardUI();
+            }
+        }
+        
+        function prevStep() {
+            if(currentStep > 1) {
+                currentStep--;
+                updateWizardUI();
+            }
+        }
+
+        function goToStep(step) {
+            currentStep = step;
+            updateWizardUI();
+        }
+
+        // Modal Logic & Data Validation Control (DVC 1)
+        function openAddDrugModal() {
+            const modal = document.getElementById('modal-add-drug');
+            const content = document.getElementById('modal-add-drug-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.replace('scale-95', 'scale-100'), 10);
+        }
+        
+        function closeAddDrugModal() {
+            const modal = document.getElementById('modal-add-drug');
+            const content = document.getElementById('modal-add-drug-content');
+            content.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+            
+            // Reset form
+            document.querySelectorAll('#modal-add-drug input[type="text"], #modal-add-drug input[type="number"]').forEach(i => {
+                i.value = '';
+                i.classList.remove('input-error');
+                i.nextElementSibling.classList.add('hidden');
+            });
+        }
+        
+        function validateAddDrug(e) {
+            e.preventDefault();
+            let isValid = true;
+            const fields = ['drug-generic', 'drug-trade', 'drug-form', 'drug-min'];
+            
+            fields.forEach(id => {
+                const input = document.getElementById(id);
+                const errorSpan = input.nextElementSibling;
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('input-error');
+                    errorSpan.textContent = 'กรุณากรอกข้อมูลในช่องนี้';
+                    errorSpan.classList.remove('hidden');
+                } else {
+                    input.classList.remove('input-error');
+                    errorSpan.classList.add('hidden');
+                }
+            });
+            
+            if (isValid) {
+                alert('บันทึกข้อมูลยาใหม่สำเร็จ');
+                closeAddDrugModal();
+            }
+        }
+
+        // Data Validation Control (DVC 2) - Prescription Logic
+        function loadPatient() {
+            const hn = document.getElementById('presc-hn').value;
+            if(hn === '66001234') {
+                document.getElementById('presc-name').value = 'นายสมชาย ใจดี';
+                document.getElementById('presc-weight').value = '55';
+                checkAllergy(); // check if drug is already selected
+            } else {
+                document.getElementById('presc-name').value = 'ไม่พบข้อมูลผู้ป่วย';
+                document.getElementById('presc-weight').value = '-';
+            }
+        }
+        
+        function checkAllergy() {
+            const hn = document.getElementById('presc-hn').value;
+            const drug = document.getElementById('presc-drug').value;
+            
+            if (hn === '66001234' && drug === 'Cisplatin') {
+                // Show Alert Box สีแดง
+                alert('🚨 คำเตือนอันตรายระดับสูง (High Alert) 🚨\n\nผู้ป่วยรายนี้ (นายสมชาย ใจดี) มีประวัติ "แพ้ยา" ตัวนี้ (Cisplatin) \nห้ามสั่งจ่ายเด็ดขาด!');
+                document.getElementById('presc-drug').value = ''; // Reset selection
+            }
+        }
+        
+        // Setup initial UI
+        updateWizardUI();
+
+    </script>
+</body>
+</html>
+
