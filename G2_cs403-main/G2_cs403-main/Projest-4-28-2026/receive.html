@@ -594,6 +594,26 @@
     <script>
         // Master Medication Data
         const masterData = [];
+        const DEFAULT_CANCER_DRUGS = [
+            { id: 'PD-00007', name: 'Cisplatin 50mg', storage: 'อุณหภูมิห้อง', stock: 120, unit: 'ขวด' },
+            { id: 'PD-00008', name: 'Endoxan 500mg', storage: 'อุณหภูมิห้อง', stock: 180, unit: 'ขวด' },
+            { id: 'PD-00009', name: 'Adriamycin 50mg', storage: 'ตู้เย็น', stock: 95, unit: 'ขวด' },
+            { id: 'PD-00010', name: 'Taxol 100mg', storage: 'ตู้เย็น', stock: 70, unit: 'ขวด' },
+            { id: 'PD-00011', name: 'Carboplatin 450mg', storage: 'อุณหภูมิห้อง', stock: 88, unit: 'ขวด' },
+            { id: 'PD-00012', name: 'Gemcitabine 1g', storage: 'ตู้เย็น', stock: 76, unit: 'ขวด' },
+            { id: 'PD-00013', name: 'Fluorouracil 5g', storage: 'อุณหภูมิห้อง', stock: 110, unit: 'ขวด' },
+            { id: 'PD-00014', name: 'Oxaliplatin 100mg', storage: 'ตู้เย็น', stock: 64, unit: 'ขวด' },
+            { id: 'PD-00015', name: 'Docetaxel 80mg', storage: 'ตู้เย็น', stock: 52, unit: 'ขวด' },
+            { id: 'PD-00016', name: 'Irinotecan 100mg', storage: 'อุณหภูมิห้อง', stock: 60, unit: 'ขวด' }
+        ];
+
+        function seedMasterMedicationData() {
+            DEFAULT_CANCER_DRUGS.forEach(drug => {
+                if (!masterData.find(item => item.id === drug.id)) {
+                    masterData.push({ ...drug });
+                }
+            });
+        }
 
         let barcodeString = "";
         
@@ -1181,6 +1201,8 @@
 
         window.onload = () => {
             lucide.createIcons();
+            seedMasterMedicationData();
+            initMasterTable();
             
             if (currentUser) {
                 const fullNameEl = document.getElementById('user-fullname');

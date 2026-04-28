@@ -249,7 +249,7 @@
                 <div class="office-card p-4 rounded grid grid-cols-12 gap-4 bg-white shrink-0">
                     <div class="col-span-8 space-y-3">
                         <div class="flex items-center gap-3">
-                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">รหัส HN</span>
+                            <span class="text-xs font-bold w-24 text-gray-500 uppercase tracking-tight">เลขที่ใบสั่ง</span>
                             <input type="text" id="order-no" oninput="syncPrescriptionData()" value="" class="border p-1.5 rounded text-sm w-48 bg-blue-50 font-black text-blue-900 outline-none focus:border-blue-500">
                             <span id="order-status" class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-black uppercase">รอดำเนินการ</span>
                         </div>
@@ -357,7 +357,7 @@
 
                     <div class="flex justify-between items-center px-4 py-2 bg-blue-50 border-t border-blue-100 text-xs font-bold">
                         <div class="flex gap-2">
-                            <button type="button" onclick="confirm('ยืนยันการยกเลิกใบสั่งยา?') && alert('ยกเลิกเรียบร้อย')" class="bg-white border border-red-200 text-red-600 px-4 py-1.5 rounded text-[11px] font-bold hover:bg-red-50 transition shadow-sm">ยกเลิกใบสั่ง</button>
+                            <button type="button" onclick="handleCancelPrescription()" class="bg-white border border-red-200 text-red-600 px-4 py-1.5 rounded text-[11px] font-bold hover:bg-red-50 transition shadow-sm">ยกเลิกใบสั่ง</button>
                         </div>
                         <div class="flex gap-2 items-center">
                             <div class="flex items-center gap-2 mr-4">
@@ -474,7 +474,13 @@
             'PD-00008': { name: 'Endoxan', totalVol: 20, conc: 25 }, // 500mg/20ml
             'PD-00009': { name: 'Adriamycin', totalVol: 25, conc: 2 }, // 50mg/25ml
             'PD-00007': { name: 'Cisplatin', totalVol: 50, conc: 1 },  // 50mg/50ml
-            'PD-00010': { name: 'Taxol', totalVol: 16.7, conc: 6 }    // 100mg/16.7ml
+            'PD-00010': { name: 'Taxol', totalVol: 16.7, conc: 6 },   // 100mg/16.7ml
+            'PD-00011': { name: 'Carboplatin', totalVol: 45, conc: 10 }, // 450mg/45ml
+            'PD-00012': { name: 'Gemcitabine', totalVol: 50, conc: 38 }, // 1900mg/50ml
+            'PD-00013': { name: 'Fluorouracil', totalVol: 100, conc: 50 }, // 5000mg/100ml
+            'PD-00014': { name: 'Oxaliplatin', totalVol: 50, conc: 5 }, // 250mg/50ml
+            'PD-00015': { name: 'Docetaxel', totalVol: 4, conc: 20 }, // 80mg/4ml
+            'PD-00016': { name: 'Irinotecan', totalVol: 5, conc: 20 } // 100mg/5ml
         };
 
         let residualStock = {
@@ -482,7 +488,7 @@
             'PD-00009': { volume: 0 }
         };
 
-        const prescriptions = {
+        const DEFAULT_PRESCRIPTIONS = {
             'RX-2026-001': { 
                 patient: 'นายสมชาย ใจดี', hn: '66001234', doctor: 'นพ.เก่งกาจ สามารถ', status: 'รอดำเนินการ',
                 createdAt: Date.now() - 2000000,
@@ -506,6 +512,33 @@
                 ]
             }
         };
+        let prescriptions = JSON.parse(JSON.stringify(DEFAULT_PRESCRIPTIONS));
+        let selectedMedicationIndex = null;
+        let selectedPrescriptionId = null;
+        let lastSaveClickAt = 0;
+        let pendingDispenseAfterHad = false;
+
+        function savePrescriptionsToStorage() {
+            localStorage.setItem('chemo_prescriptions', JSON.stringify(prescriptions));
+        }
+
+        function loadPrescriptionsFromStorage() {
+            const raw = localStorage.getItem('chemo_prescriptions');
+            if (!raw) {
+                savePrescriptionsToStorage();
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                    prescriptions = parsed;
+                }
+            } catch (error) {
+                prescriptions = JSON.parse(JSON.stringify(DEFAULT_PRESCRIPTIONS));
+                savePrescriptionsToStorage();
+            }
+        }
 
         function calculateResidual(drugId, doseMg) {
             const drug = drugInventory[drugId];
@@ -568,6 +601,7 @@
 
         window.onload = () => {
             lucide.createIcons();
+            loadPrescriptionsFromStorage();
             
             if (currentUser) {
                 const fullNameEl = document.getElementById('user-fullname');
@@ -627,13 +661,48 @@
                 tr.onclick = () => loadPrescription(id);
                 
                 tr.innerHTML = `
-                    <td class="p-3 text-center"><i data-lucide="file-text" class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition"></i></td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <i data-lucide="file-text" class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition"></i>
+                            <button type="button" onclick="deletePrescriptionFromSidebar('${id}', event)" class="text-gray-300 hover:text-red-500 transition" title="ลบรายชื่อผู้ป่วยนี้">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </td>
                     <td class="p-3 text-center font-black text-blue-900">${data.hn || '-'}</td>
                     <td class="p-3 font-bold text-gray-700">${data.patient}</td>
                 `;
                 tbody.appendChild(tr);
             });
             lucide.createIcons({ root: tbody });
+        }
+
+        function clearPrescriptionWorkspace() {
+            document.getElementById('order-no').value = '';
+            document.getElementById('patient-name').value = '';
+            document.getElementById('doctor-name').value = '';
+            document.getElementById('order-status').innerText = 'รอดำเนินการ';
+            document.getElementById('order-status').className = "bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+            document.getElementById('items-table-body').innerHTML = '';
+            document.getElementById('total-items-count').innerText = '0';
+            selectedMedicationIndex = null;
+            selectedPrescriptionId = null;
+        }
+
+        function deletePrescriptionFromSidebar(id, event) {
+            if (event) event.stopPropagation();
+            if (!prescriptions[id]) return;
+
+            const confirmed = window.confirm(`ต้องการลบรายชื่อผู้ป่วยและใบสั่ง ${id} ใช่หรือไม่?`);
+            if (!confirmed) return;
+
+            delete prescriptions[id];
+            savePrescriptionsToStorage();
+            if (document.getElementById('order-no').value.trim() === id) {
+                clearPrescriptionWorkspace();
+            }
+            initPrescriptionSidebar();
+            showNotice(`ลบรายการ ${id} ออกจากรายชื่อผู้ป่วยแล้ว`, 'success');
         }
 
         function addNewPrescription() {
@@ -660,9 +729,13 @@
                 patient: 'รอกรอกชื่อ...', hn: '', doctor: '', status: 'ใบสั่งยาใหม่', items: [],
                 createdAt: Date.now()
             };
+            document.getElementById('order-no').value = nextId;
+            selectedPrescriptionId = nextId;
+            selectedMedicationIndex = null;
 
             // Add First Empty Row
             addMedicationRow();
+            savePrescriptionsToStorage();
             
             initPrescriptionSidebar();
             showAntigravityNotice('เริ่มสร้างใบสั่งยาใหม่ • ' + nextId);
@@ -693,20 +766,78 @@
             lucide.createIcons({ root: tr });
         }
 
+        function getDrugSelectOptions(selectedId = '') {
+            return ['<option value="">เลือกรายการยา...</option>']
+                .concat(
+                    Object.keys(drugInventory).sort().map(id => {
+                        const selected = id === selectedId ? 'selected' : '';
+                        return `<option value="${id}" ${selected}>${drugInventory[id].name} (${id})</option>`;
+                    })
+                )
+                .join('');
+        }
+
+        function getAutoDateStrings() {
+            const now = new Date();
+            const open = now.toISOString().split('T')[0];
+            const exp = new Date(now);
+            exp.setFullYear(now.getFullYear() + 1);
+            return { openDate: open, expiryDate: exp.toISOString().split('T')[0] };
+        }
+
+        function populateMedicationRow(index, drugId) {
+            const orderId = document.getElementById('order-no').value;
+            const order = prescriptions[orderId];
+            const row = document.getElementById(`row-${index}`);
+            if (!order || !order.items[index] || !row || !drugInventory[drugId]) return;
+
+            const item = order.items[index];
+            const drug = drugInventory[drugId];
+            const dates = getAutoDateStrings();
+            const lotNo = `${drugId.replace('PD-', 'LOT-')}-01`;
+            const vialMg = Number((drug.conc * drug.totalVol).toFixed(2));
+            const doseMg = Number(item.doseMg) > 0 ? Number(item.doseMg) : vialMg;
+            const doseMl = Number((doseMg / drug.conc).toFixed(2));
+            const vialCount = Math.max(1, Math.ceil(doseMl / drug.totalVol));
+            const remainingMl = Number(Math.max(0, (vialCount * drug.totalVol) - doseMl).toFixed(2));
+
+            item.id = drugId;
+            item.name = drug.name;
+            item.doseMg = doseMg;
+
+            const lotInput = row.querySelector('.lot-input');
+            const openInput = row.querySelector('.open-date-input');
+            const expInput = row.querySelector('.expiry-date-input');
+            const vialQtyInput = row.querySelector('.vial-qty-input');
+            const fullMgInput = row.querySelector('.full-mg-input');
+            const doseInput = row.querySelector('.dose-input');
+            const remainInput = row.querySelector('.remaining-ml-input');
+
+            if (lotInput) lotInput.value = lotNo;
+            if (openInput) openInput.value = dates.openDate;
+            if (expInput) expInput.value = dates.expiryDate;
+            if (vialQtyInput) vialQtyInput.value = vialCount;
+            if (fullMgInput) fullMgInput.value = doseMg;
+            if (doseInput) doseInput.value = doseMg;
+            if (remainInput) remainInput.value = remainingMl;
+
+            updateManualRowCalc(index, doseMg);
+        }
+
         function syncPrescriptionData() {
             const orderId = document.getElementById('order-no').value;
             if (!prescriptions[orderId]) return;
 
             prescriptions[orderId].patient = document.getElementById('patient-name').value || 'รอกรอกชื่อ...';
-            prescriptions[orderId].hn = orderId; // Use the primary HN field as the HN value
+            // Keep original HN from selected prescription; order-no is RX id in this page flow.
             prescriptions[orderId].doctor = document.getElementById('doctor-name').value;
             
             // Sync any unsaved drug inputs
             const tbody = document.getElementById('items-table-body');
             Array.from(tbody.children).forEach((tr, index) => {
-                const drugInput = tr.querySelector('input[list="drug-list"]');
-                if (drugInput && drugInput.value) {
-                    handleDrugSearch(index, drugInput.value);
+                const drugSelect = tr.querySelector('.drug-select');
+                if (drugSelect && drugSelect.value) {
+                    populateMedicationRow(index, drugSelect.value);
                 }
                 const doseInput = tr.querySelector('.dose-input');
                 if (doseInput && doseInput.value) {
@@ -718,10 +849,21 @@
         }
 
         function saveCurrentPrescription() {
+            const now = Date.now();
+            if (now - lastSaveClickAt < 1000) {
+                showNotice('กำลังบันทึกอยู่ กรุณารอสักครู่', 'info');
+                return;
+            }
+            lastSaveClickAt = now;
+
             syncPrescriptionData();
 
             const orderId = document.getElementById('order-no').value;
             const data = prescriptions[orderId];
+            if (!data) {
+                showNotice('กรุณาเลือกใบสั่งยาจากรายการก่อนบันทึก', 'warning');
+                return;
+            }
             
             if (!data.patient || data.patient === 'รอกรอกชื่อ...') {
                 showNotice('กรุณากรอกชื่อผู้ป่วยก่อนบันทึก', 'warning');
@@ -738,15 +880,76 @@
                 return;
             }
 
+            if (data.items.some(item => !item.doseMg || Number(item.doseMg) <= 0)) {
+                showNotice('กรุณาระบุขนาดยาที่ใช้ (ml) ให้มากกว่า 0 ในทุกรายการก่อนบันทึก', 'warning');
+                return;
+            }
+
             data.status = "บันทึกแล้ว";
             document.getElementById('order-status').innerText = "บันทึกแล้ว";
             document.getElementById('order-status').className = "bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+            savePrescriptionsToStorage();
             
             initPrescriptionSidebar();
             showAntigravityNotice('บันทึกใบสั่งยาเรียบร้อย • ' + orderId);
             
             // Re-render table so it turns into the "saved" text view
             renderMedTable(orderId);
+        }
+
+        function handleCancelPrescription() {
+            const orderId = document.getElementById('order-no').value.trim();
+            if (!orderId || !prescriptions[orderId]) {
+                showNotice('กรุณาเลือกใบสั่งยาที่ต้องการยกเลิกก่อน', 'warning');
+                return;
+            }
+
+            const data = prescriptions[orderId];
+            if (selectedMedicationIndex !== null && data.items[selectedMedicationIndex]) {
+                const item = data.items[selectedMedicationIndex];
+                const confirmedItem = window.confirm(`ยืนยันยกเลิกรายการลำดับที่ ${selectedMedicationIndex + 1} (${item.name || '-'}) ใช่หรือไม่?`);
+                if (!confirmedItem) return;
+
+                data.items.splice(selectedMedicationIndex, 1);
+                selectedMedicationIndex = null;
+                savePrescriptionsToStorage();
+                renderMedTable(orderId);
+                initPrescriptionSidebar();
+                showNotice('ยกเลิกรายการยาที่เลือกเรียบร้อยแล้ว', 'success');
+                return;
+            }
+
+            const confirmed = window.confirm(`ยืนยันการยกเลิกใบสั่งยา ${orderId} ทั้งใบใช่หรือไม่?`);
+            if (!confirmed) return;
+            data.status = 'ยกเลิกแล้ว';
+            savePrescriptionsToStorage();
+
+            document.getElementById('order-status').innerText = 'ยกเลิกแล้ว';
+            document.getElementById('order-status').className = "bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+
+            // Clear work area after full cancel so user sees immediate state change.
+            document.getElementById('patient-name').value = '';
+            document.getElementById('doctor-name').value = '';
+            document.getElementById('items-table-body').innerHTML = '';
+            document.getElementById('total-items-count').innerText = '0';
+            selectedMedicationIndex = null;
+
+            initPrescriptionSidebar();
+            showNotice(`ยกเลิกใบสั่งยา ${orderId} เรียบร้อยแล้ว`, 'success');
+        }
+
+        function selectMedicationRow(index, event) {
+            if (event) event.stopPropagation();
+            const orderId = document.getElementById('order-no').value.trim();
+            if (!orderId || !prescriptions[orderId]) return;
+            selectedMedicationIndex = index;
+
+            document.querySelectorAll('#items-table-body tr').forEach((row, rowIndex) => {
+                row.classList.remove('bg-red-50', 'ring-1', 'ring-red-300');
+                if (rowIndex === index) {
+                    row.classList.add('bg-red-50', 'ring-1', 'ring-red-300');
+                }
+            });
         }
 
         function addMedicationRow() {
@@ -784,33 +987,32 @@
             }
 
             tr.innerHTML = `
-                <td class="p-2 text-center text-gray-400 font-bold border-r mono-num">${index + 1}</td>
+                <td class="p-2 text-center text-gray-400 font-bold border-r mono-num cursor-pointer hover:bg-red-50/60" onclick="selectMedicationRow(${index}, event)" title="คลิกเพื่อเลือกยกเลิกรายการนี้">${index + 1}</td>
                 <td class="p-2 border-r">
-                    <input type="text" list="drug-list" 
-                           onchange="handleDrugSearch(${index}, this.value)"
-                           placeholder="เลือกรายการยา..." 
-                           class="w-full text-[12px] font-black p-1 border rounded outline-none focus:border-blue-500 bg-gray-50/50 text-blue-900 tracking-tighter">
+                    <select onchange="populateMedicationRow(${index}, this.value)" class="drug-select w-full text-[12px] font-black p-1 border rounded outline-none focus:border-blue-500 bg-gray-50/50 text-blue-900 tracking-tighter">
+                        ${getDrugSelectOptions()}
+                    </select>
                 </td>
                 <td class="p-2 border-r">
-                    <input type="text" list="lot-list" placeholder="เลือก Lot..." class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold">
+                    <input type="text" list="lot-list" placeholder="เลือก Lot..." class="lot-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold">
                 </td>
                 <td class="p-2 border-r">
                     <div class="flex flex-col gap-1">
-                        <input type="text" placeholder="เปิด: วว/ดด/ปป" class="w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500">
-                        <input type="text" placeholder="หมด: วว/ดด/ปป" class="w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500 bg-red-50/30">
+                        <input type="text" placeholder="เปิด: วว/ดด/ปป" class="open-date-input w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500">
+                        <input type="text" placeholder="หมด: วว/ดด/ปป" class="expiry-date-input w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500 bg-red-50/30">
                     </div>
                 </td>
                 <td class="p-2 border-r">
-                    <input type="text" placeholder="จำนวนขวด" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center">
+                    <input type="text" placeholder="จำนวนขวด" class="vial-qty-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center">
                 </td>
                 <td class="p-2 border-r">
-                    <input type="text" placeholder="เช่น 594(เศษ 154 + ใหม่ 440)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500">
+                    <input type="text" placeholder="เช่น 594(เศษ 154 + ใหม่ 440)" class="full-mg-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500">
                 </td>
                 <td class="p-2 border-r">
-                    <input type="text" placeholder="Dose (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-blue-900">
+                    <input type="number" min="0" step="0.01" oninput="updateManualRowCalc(${index}, this.value)" placeholder="Dose (ml)" class="dose-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-blue-900">
                 </td>
                 <td class="p-2">
-                    <input type="text" placeholder="คงเหลือ (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-green-700">
+                    <input type="text" placeholder="คงเหลือ (ml)" class="remaining-ml-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-green-700">
                 </td>
             `;
             tbody.appendChild(tr);
@@ -823,6 +1025,7 @@
 
         function handleDrugSearch(index, drugName) {
             const orderId = document.getElementById('order-no').value;
+            if (!prescriptions[orderId] || !prescriptions[orderId].items[index]) return;
             // Find ID from name in inventory
             let drugId = '';
             for (let id in drugInventory) {
@@ -840,14 +1043,12 @@
 
             const drug = drugInventory[drugId];
             if (!drug) return;
-
-            // Update UI
-            document.getElementById(`conc-val-${index}`).innerText = drug.conc;
             
             // Sync Data
             const item = prescriptions[orderId].items[index];
             item.id = drugId;
             item.name = drug.name;
+            savePrescriptionsToStorage();
 
             // Recalculate
             const doseInput = document.querySelector(`#row-${index} .dose-input`);
@@ -859,27 +1060,26 @@
         function updateManualRowCalc(index, doseVal) {
             const orderId = document.getElementById('order-no').value;
             const doseMg = parseFloat(doseVal) || 0;
-            const item = prescriptions[orderId].items[index];
+            const order = prescriptions[orderId];
+            if (!order || !order.items[index]) return;
+            const item = order.items[index];
             if (!item || !item.id) return;
 
             item.doseMg = doseMg;
-            const calc = calculateResidual(item.id, doseMg);
-
-            // Update UI
-            document.getElementById(`vol-cell-${index}`).innerHTML = getVolumeCellHtml(calc);
-            const statusCell = document.getElementById(`stock-status-${index}`);
-            statusCell.innerHTML = getStockStatusHtml(calc);
-            lucide.createIcons({ root: statusCell });
+            savePrescriptionsToStorage();
 
             // Update Grand Total
             let total = 0;
-            prescriptions[orderId].items.forEach(it => total += parseFloat(it.doseMg || 0));
+            order.items.forEach(it => total += parseFloat(it.doseMg || 0));
             document.getElementById('total-items-count').innerText = total.toFixed(0);
         }
 
         function loadPrescription(id) {
             const data = prescriptions[id];
             if (!data) return;
+            selectedPrescriptionId = id;
+            selectedMedicationIndex = null;
+            resetHadState();
 
             document.getElementById('order-no').value = id;
             document.getElementById('patient-name').value = data.patient === 'รอกรอกชื่อ...' ? '' : data.patient;
@@ -889,6 +1089,8 @@
             const statusBadge = document.getElementById('order-status');
             if (data.status === 'บันทึกแล้ว') {
                 statusBadge.className = "bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
+            } else if (data.status === 'ยกเลิกแล้ว') {
+                statusBadge.className = "bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
             } else if (data.status === 'ใบสั่งยาใหม่') {
                 statusBadge.className = "bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
             } else {
@@ -916,35 +1118,38 @@
                 const stockActionHtml = getStockStatusHtml(calc);
 
                 tr.innerHTML = `
-                    <td class="p-2 text-center text-gray-400 font-bold border-r mono-num">${index + 1}</td>
+                    <td class="p-2 text-center text-gray-400 font-bold border-r mono-num cursor-pointer hover:bg-red-50/60" onclick="selectMedicationRow(${index}, event)" title="คลิกเพื่อเลือกยกเลิกรายการนี้">${index + 1}</td>
                     <td class="p-2 border-r">
-                        <input type="text" list="drug-list" value=""
-                               placeholder="เลือกรายการยา..." 
-                               class="w-full text-[12px] font-black p-1 border rounded outline-none focus:border-blue-500 bg-gray-50/50 text-blue-900 tracking-tighter">
+                        <select onchange="populateMedicationRow(${index}, this.value)" class="drug-select w-full text-[12px] font-black p-1 border rounded outline-none focus:border-blue-500 bg-gray-50/50 text-blue-900 tracking-tighter">
+                            ${getDrugSelectOptions(item.id || '')}
+                        </select>
                     </td>
                     <td class="p-2 border-r">
-                        <input type="text" list="lot-list" value="" placeholder="เลือก Lot..." class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold">
+                        <input type="text" list="lot-list" value="${item.id ? item.id.replace('PD-', 'LOT-') + '-01' : ''}" placeholder="เลือก Lot..." class="lot-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold">
                     </td>
                     <td class="p-2 border-r">
                         <div class="flex flex-col gap-1">
-                            <input type="text" value="" placeholder="เปิด: วว/ดด/ปป" class="w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500">
-                            <input type="text" value="" placeholder="หมด: วว/ดด/ปป" class="w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500 bg-red-50/30">
+                            <input type="text" value="${getAutoDateStrings().openDate}" placeholder="เปิด: วว/ดด/ปป" class="open-date-input w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500">
+                            <input type="text" value="${getAutoDateStrings().expiryDate}" placeholder="หมด: วว/ดด/ปป" class="expiry-date-input w-full text-[10px] p-1 border rounded outline-none focus:border-blue-500 bg-red-50/30">
                         </div>
                     </td>
                     <td class="p-2 border-r">
-                        <input type="text" value="" placeholder="จำนวนขวด" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center">
+                        <input type="text" value="${item.id ? 1 : ''}" placeholder="จำนวนขวด" class="vial-qty-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center">
                     </td>
                     <td class="p-2 border-r">
-                        <input type="text" value="" placeholder="เช่น 594(เศษ 154 + ใหม่ 440)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500">
+                        <input type="text" value="${item.doseMg || ''}" placeholder="เช่น 594(เศษ 154 + ใหม่ 440)" class="full-mg-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500">
                     </td>
                     <td class="p-2 border-r">
-                        <input type="text" value="" placeholder="Dose (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-blue-900">
+                        <input type="number" min="0" step="0.01" value="${item.doseMg || ''}" oninput="updateManualRowCalc(${index}, this.value)" placeholder="Dose (ml)" class="dose-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-blue-900">
                     </td>
                     <td class="p-2">
-                        <input type="text" value="" placeholder="คงเหลือ (ml)" class="w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-green-700">
+                        <input type="text" value="" placeholder="คงเหลือ (ml)" class="remaining-ml-input w-full text-[11px] p-1 border rounded outline-none focus:border-blue-500 text-center font-bold text-green-700">
                     </td>
                 `;
                 tbody.appendChild(tr);
+                if (item.id) {
+                    setTimeout(() => populateMedicationRow(index, item.id), 0);
+                }
             });
 
             document.getElementById('total-items-count').innerText = totalMg.toFixed(0);
@@ -1029,7 +1234,8 @@
         function updateResidualHeader() {
             let count = 0;
             for(let key in residualStock) {
-                if(residualStock[key] > 0) count++;
+                const vol = residualStock[key]?.volume || 0;
+                if(vol > 0) count++;
             }
             document.getElementById('residual-count').innerText = count;
         }
@@ -1041,7 +1247,7 @@
 
             let hasResidual = false;
             for (let key in residualStock) {
-                const vol = residualStock[key];
+                const vol = residualStock[key]?.volume || 0;
                 if (vol > 0) {
                     hasResidual = true;
                     const drug = drugInventory[key];
@@ -1080,7 +1286,10 @@
         function openHadModal() {
             const orderNo = document.getElementById('order-no').value;
             const data = prescriptions[orderNo];
-            if (!data || data.items.length === 0) return;
+            if (!data || data.items.length === 0) {
+                showNotice('กรุณาเลือกรายการยาก่อนตรวจสอบ HAD', 'warning');
+                return;
+            }
             
             // Show first item code as hint
             document.getElementById('presc-code-hint').innerText = `EXPECTED: ${data.items[0].id}`;
@@ -1103,11 +1312,13 @@
         function checkHadInputs() {
             const orderNo = document.getElementById('order-no').value;
             const data = prescriptions[orderNo];
+            if (!data || !data.items || !data.items[0]) return;
             const expectedCode = data.items[0].id;
             const enteredCode = document.getElementById('stock-code-verify').value.trim();
 
             const allChecked = Array.from(document.querySelectorAll('.had-check-item')).every(cb => cb.checked);
-            const codeMatches = enteredCode === expectedCode;
+            const normalize = (value) => String(value || '').toUpperCase().replace(/\s+/g, '');
+            const codeMatches = normalize(enteredCode) === normalize(expectedCode);
 
             const btn = document.getElementById('verify-had-btn');
             if (allChecked && codeMatches) {
@@ -1133,6 +1344,21 @@
             
             lucide.createIcons({ root: document.body });
             showNotice('ตรวจสอบความเสี่ยง (HAD Check) เรียบร้อยแล้ว ปุ่มยืนยันพร้อมใช้งาน', 'success');
+
+            if (pendingDispenseAfterHad) {
+                pendingDispenseAfterHad = false;
+                setTimeout(() => goToDispense(), 0);
+            }
+        }
+
+        function resetHadState() {
+            const hadBtn = document.getElementById('had-check-btn');
+            if (!hadBtn) return;
+            hadBtn.innerHTML = '<i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> ตรวจสอบ HAD';
+            hadBtn.className = "bg-orange-500 text-white px-4 py-1.5 rounded shadow-md text-[11px] font-bold hover:bg-orange-600 transition flex items-center gap-1.5";
+            hadBtn.style.pointerEvents = '';
+            lucide.createIcons({ root: hadBtn });
+            pendingDispenseAfterHad = false;
         }
 
         function closeHadModal() {
@@ -1142,7 +1368,21 @@
         function goToDispense() {
             const orderNo = document.getElementById('order-no').value;
             const data = prescriptions[orderNo];
-            if (!data) return;
+            if (!data) {
+                showNotice('กรุณาเลือกใบสั่งยาก่อนยืนยันจ่ายยา', 'warning');
+                return;
+            }
+            if (!data.items || data.items.length === 0 || data.items.some(item => !item.id || Number(item.doseMg) <= 0)) {
+                showNotice('กรุณาตรวจสอบรายการยาและขนาดยาก่อนยืนยันจ่ายยา', 'warning');
+                return;
+            }
+            const hadVerified = document.getElementById('had-check-btn').className.includes('bg-green-600');
+            if (!hadVerified) {
+                pendingDispenseAfterHad = true;
+                showNotice('กรุณาตรวจสอบ HAD ก่อน ระบบจะเปิดหน้าตรวจสอบให้อัตโนมัติ', 'info');
+                openHadModal();
+                return;
+            }
 
             // 1. Stock Sufficiency Check
             let stockIsEnough = true;
@@ -1210,7 +1450,7 @@
                 });
 
                 // Check Accumulation Alert
-                if (drug && residualStock[item.id] >= drug.totalVol) {
+                if (drug && (residualStock[item.id]?.volume || 0) >= drug.totalVol) {
                     showNotice(`💡 [${item.name}] สะสมครบขวดเต็ม`, 'info');
                 }
             });
@@ -1218,6 +1458,7 @@
             // Update order status
             prescriptions[orderNo].status = "คำนวณแล้ว";
             document.getElementById('order-status').innerText = "คำนวณแล้ว";
+            savePrescriptionsToStorage();
 
             // Save to localStorage for prescription.html
             const dispensePayload = {
