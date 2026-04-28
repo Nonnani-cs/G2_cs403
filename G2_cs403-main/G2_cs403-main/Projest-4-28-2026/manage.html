@@ -748,7 +748,7 @@
                             <i data-lucide="trash-2" class="w-5 h-5 mb-1"></i>
                             ลบข้อมูลสินค้า
                         </button>
-                        <button type="button" id="btn-save" onclick="showNotice('บันทึกข้อมูลเรียบร้อย')"
+                        <button type="button" id="btn-save" onclick="handleMainSave()"
                             class="office-btn-primary flex flex-col items-center justify-center w-24 h-16 text-[10px] font-bold">
                             <i data-lucide="save" class="w-5 h-5 mb-1"></i>
                             บันทึก
@@ -1163,6 +1163,24 @@
             
             showNotice('บันทึกข้อมูลยาเรียบร้อยแล้ว');
             closeModal();
+        }
+
+        function handleMainSave() {
+            const detailCode = document.getElementById('detail-code')?.value.trim();
+            const detailName = document.getElementById('detail-name')?.value.trim();
+            const currentQty = document.getElementById('detail-current-qty')?.value.trim();
+
+            if (!detailCode || !detailName) {
+                showNotice('ไม่พบข้อมูลยาที่พร้อมบันทึก กรุณาเลือกหรือกรอกข้อมูลยาให้ครบก่อน', 'warning');
+                return;
+            }
+
+            if (!currentQty || Number(currentQty) < 0) {
+                showNotice('กรุณาตรวจสอบจำนวนคงเหลือให้ถูกต้องก่อนบันทึก', 'warning');
+                return;
+            }
+
+            showNotice('บันทึกข้อมูลเรียบร้อย');
         }
 
         function handleDeleteDrug() {

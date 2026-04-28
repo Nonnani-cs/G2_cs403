@@ -247,7 +247,9 @@
                         </div>
                         <div class="flex gap-2">
                             <button type="button" onclick="location.reload()" class="bg-gray-200 text-gray-700 px-4 py-1.5 rounded text-[11px] font-bold hover:bg-gray-300 transition shadow-sm">ยกเลิก</button>
-                            <button type="button" onclick="showNotice('บันทึกและเสร็จสิ้นเรียบร้อย')" class="bg-green-600 text-white px-6 py-1.5 rounded shadow-md text-[11px] font-bold hover:bg-green-700 transition flex items-center gap-1.5">
+                            <button id="save-finish-btn" type="button" onclick="saveAndFinish()" disabled
+                                class="bg-gray-300 text-gray-400 px-6 py-1.5 rounded shadow-md text-[11px] font-bold transition flex items-center gap-1.5 cursor-not-allowed"
+                                title="กรุณาเพิ่มรายการยาก่อนบันทึก">
                                 บันทึกและเสร็จสิ้น <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
@@ -642,6 +644,10 @@
         // Add Selected Items to Transaction
         function addSelectedItems() {
             const checkboxes = document.querySelectorAll('#master-table-body input:checked');
+            if (checkboxes.length === 0) {
+                showNotice('กรุณาเลือกรายการยาอย่างน้อย 1 รายการก่อนกดเพิ่ม', 'warning');
+                return;
+            }
             checkboxes.forEach(cb => {
                 handleScan(cb.value);
                 cb.checked = false;
@@ -705,7 +711,11 @@
         function confirmScanAdd() {
             if (!currentScannedMedicine) return;
 
-            const qty = parseInt(document.getElementById('scan-qty').value) || 1;
+            const qty = parseInt(document.getElementById('scan-qty').value) || 0;
+            if (qty <= 0) {
+                showNotice('กรุณากรอกจำนวนมากกว่า 0', 'warning');
+                return;
+            }
             const storage = document.getElementById('scan-storage').value;
             
             // Check if already in list (with same storage)
@@ -717,6 +727,7 @@
             }
             
             renderCheckoutTable();
+            updateSaveButtonState();
             closeScanModal();
             showNotice('เพิ่ม ' + currentScannedMedicine.name + ' จำนวน ' + qty + ' ' + currentScannedMedicine.unit, 'success');
         }
@@ -885,7 +896,7 @@
             const item = checkoutList.find(i => i.id === id);
             if(item) {
                 item.qty = Math.max(1, parseInt(val) || 1);
-                // renderCheckoutTable\(.*?\); // Removed mock init
+                renderCheckoutTable();
             }
         }
 
@@ -893,19 +904,15 @@
             const item = checkoutList.find(i => i.id === id);
             if(item) {
                 item.qty = Math.max(1, (parseInt(item.qty) || 1) + delta);
-                // renderCheckoutTable\(.*?\); // Removed mock init
+                renderCheckoutTable();
             }
         }
 
         function removeItem(id) {
             checkoutList = checkoutList.filter(i => i.id !== id);
-            // renderCheckoutTable\(.*?\); // Removed mock init
+            renderCheckoutTable();
+            updateSaveButtonState();
             showNotice('ลบรายการเรียบร้อยแล้ว', 'info');
-        }
-
-        function removeItem(id) {
-            checkoutList = checkoutList.filter(i => i.id !== id);
-            // renderCheckoutTable\(.*?\); // Removed mock init
         }
 
         function showNotice(msg, type = 'success') {
@@ -921,6 +928,10 @@
                 header.className = 'p-4 bg-green-600 text-white flex items-center gap-3 shrink-0';
                 icon.setAttribute('data-lucide', 'check-circle');
                 title.innerText = 'สำเร็จ';
+            } else if(type === 'info') {
+                header.className = 'p-4 bg-blue-600 text-white flex items-center gap-3 shrink-0';
+                icon.setAttribute('data-lucide', 'info');
+                title.innerText = 'แจ้งให้ทราบ';
             } else {
                 header.className = 'p-4 bg-orange-500 text-white flex items-center gap-3 shrink-0';
                 icon.setAttribute('data-lucide', 'alert-triangle');
@@ -929,6 +940,28 @@
 
             lucide.createIcons({ root: modal });
             modal.classList.add('active');
+        }
+
+        function updateSaveButtonState() {
+            const btn = document.getElementById('save-finish-btn');
+            if (!btn) return;
+            if (checkoutList.length > 0) {
+                btn.disabled = false;
+                btn.className = "bg-green-600 text-white px-6 py-1.5 rounded shadow-md text-[11px] font-bold hover:bg-green-700 transition flex items-center gap-1.5 cursor-pointer";
+                btn.title = '';
+            } else {
+                btn.disabled = true;
+                btn.className = "bg-gray-300 text-gray-400 px-6 py-1.5 rounded shadow-md text-[11px] font-bold transition flex items-center gap-1.5 cursor-not-allowed";
+                btn.title = 'กรุณาเพิ่มรายการยาก่อนบันทึก';
+            }
+        }
+
+        function saveAndFinish() {
+            if (checkoutList.length === 0) {
+                showNotice('ไม่มีรายการยาในตาราง กรุณาเพิ่มรายการก่อนบันทึก', 'warning');
+                return;
+            }
+            showNotice('บันทึกและเสร็จสิ้นเรียบร้อย', 'success');
         }
 
         function closeNotice() {
@@ -972,12 +1005,29 @@
         function saveStockInbound() {
             const nameSelect = document.getElementById('sr-drug-name');
             const name = nameSelect.options[nameSelect.selectedIndex].text;
-            const batch = document.getElementById('sr-batch').value;
+            const batch = document.getElementById('sr-batch').value.trim();
             const expiry = document.getElementById('sr-expiry').value;
-            const qty = document.getElementById('sr-qty').value;
-            
-            if(!nameSelect.value || !batch || !expiry || !qty) {
+            const qty = Number(document.getElementById('sr-qty').value);
+            const conc = Number(document.getElementById('sr-conc').value);
+            const vol = Number(document.getElementById('sr-vol').value);
+
+            if (!nameSelect.value || !batch || !expiry) {
                 showNotice("กรุณากรอกข้อมูลให้ครบทุกช่อง", "warning");
+                return;
+            }
+
+            if (!Number.isFinite(qty) || qty <= 0) {
+                showNotice("กรุณากรอกจำนวนขวดที่รับให้มากกว่า 0", "warning");
+                return;
+            }
+
+            if (!Number.isFinite(conc) || conc <= 0) {
+                showNotice("กรุณากรอกความเข้มข้น (mg/ml) ให้มากกว่า 0", "warning");
+                return;
+            }
+
+            if (!Number.isFinite(vol) || vol <= 0) {
+                showNotice("กรุณากรอกปริมาตรขวด (ml) ให้มากกว่า 0", "warning");
                 return;
             }
 
@@ -985,12 +1035,12 @@
                 date: new Date().toISOString().split('T')[0],
                 inv: "INV-" + Math.floor(Math.random()*90000 + 10000),
                 name: name,
-                qty: parseInt(qty),
+                qty: qty,
                 status: "สำเร็จ",
                 batch: batch,
                 expiry: expiry,
-                conc: document.getElementById('sr-conc').value + " mg/ml",
-                vol: document.getElementById('sr-vol').value + " ml"
+                conc: conc + " mg/ml",
+                vol: vol + " ml"
             };
 
             srHistory.unshift(newItem);
@@ -1001,6 +1051,10 @@
             document.getElementById('sr-batch').value = "";
             document.getElementById('sr-expiry').value = "";
             document.getElementById('sr-qty').value = "";
+            document.getElementById('sr-conc').value = "";
+            document.getElementById('sr-vol').value = "";
+            nameSelect.value = "";
+            document.getElementById('sr-pd-id').value = "";
         }
 
         function renderSRHistory() {
