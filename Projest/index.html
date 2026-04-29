@@ -245,7 +245,7 @@
     <script>
         async function logout() {
             try {
-                await fetch('http://127.0.0.1:8000/api/auth/logout', {
+                await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/auth/logout`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                 });

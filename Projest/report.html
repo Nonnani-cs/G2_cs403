@@ -590,13 +590,13 @@
 
             try {
                 if (tabType === 'stock') {
-                    const res = await fetch('http://127.0.0.1:8000/api/drugs/', {
+                    const res = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/drugs/`, {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                     });
                     const result = await res.json();
                     renderStockTable(result.data || []);
                 } else {
-                    const res = await fetch('http://127.0.0.1:8000/api/inventory/transactions', {
+                    const res = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/inventory/transactions`, {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                     });
                     const result = await res.json();

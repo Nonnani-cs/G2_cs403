@@ -947,7 +947,7 @@
 
         async function loadDrugsFromStorage() {
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/drugs/', {
+                const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/drugs/`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                 });
                 const result = await response.json();
@@ -1272,7 +1272,7 @@
             }
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/drugs/', {
+                const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/drugs/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1319,7 +1319,7 @@
                 const drugId = masterData[detailCode]?.id;
                 if (!drugId) return showNotice('ไม่พบ ID ยาในระบบ', 'warning');
 
-                const response = await fetch(`http://127.0.0.1:8000/api/drugs/${drugId}`, {
+                const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/drugs/${drugId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1349,7 +1349,7 @@
                 if (currentDrugCode && masterData[currentDrugCode]) {
                     try {
                         const drugId = masterData[currentDrugCode].id;
-                        const response = await fetch(`http://127.0.0.1:8000/api/drugs/${drugId}`, {
+                        const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/drugs/${drugId}`, {
                             method: 'DELETE',
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                         });

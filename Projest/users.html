@@ -292,7 +292,7 @@
 
         async function renderUserList() {
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/auth/users', {
+                const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/auth/users`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                 });
                 if (!response.ok) throw new Error("Failed to load users");
@@ -411,7 +411,7 @@
             const role = document.getElementById('edit-role').value;
             
             try {
-                const res = await fetch(`http://127.0.0.1:8000/api/auth/users/${userId}`, {
+                const res = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/auth/users/${userId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -445,7 +445,7 @@
         async function deleteUser(userId, fullname) {
             if (confirm(`คุณแน่ใจหรือไม่ที่จะลบบัญชีผู้ใช้ของ ${fullname}?`)) {
                 try {
-                    const res = await fetch(`http://127.0.0.1:8000/api/auth/users/${userId}`, {
+                    const res = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/auth/users/${userId}`, {
                         method: 'DELETE',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -478,7 +478,7 @@
             if (!fullname || !username || !password || password.length < 6) return;
             
             try {
-                const res = await fetch('http://127.0.0.1:8000/api/auth/register', {
+                const res = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ fullname, username, password, role })

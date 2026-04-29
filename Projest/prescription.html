@@ -696,7 +696,7 @@
                         }))
                     };
                     
-                    const syncResponse = await fetch('http://127.0.0.1:8000/api/prescriptions/sync', {
+                    const syncResponse = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/prescriptions/sync`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -713,7 +713,7 @@
                     const prescriptionId = syncResult.data.id;
 
                     // Deduct stock for each item via backend
-                    const dispenseResponse = await fetch('http://127.0.0.1:8000/api/inventory/dispense', {
+                    const dispenseResponse = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/inventory/dispense`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
