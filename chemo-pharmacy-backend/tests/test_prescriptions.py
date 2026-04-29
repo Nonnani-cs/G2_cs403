@@ -9,7 +9,7 @@ def test_prescription_create_and_status_update(client, auth_header):
     rx = client.post(
         "/api/prescriptions/",
         headers=auth_header,
-        json={"patient_id": patient["id"], "notes": "", "items": [{"drug_id": drug["id"], "qty": 2}]},
+        json={"order_no": "TEST-001", "patient_id": patient["id"], "notes": "", "items": [{"drug_id": drug["id"], "qty": 2}]},
     )
     assert rx.status_code == 200
     rx_id = rx.json()["data"]["id"]
