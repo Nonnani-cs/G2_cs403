@@ -290,64 +290,77 @@
             setTimeout(() => notice.classList.add('translate-y-24', 'opacity-0'), 3000);
         }
 
-        function renderUserList() {
-            const users = JSON.parse(localStorage.getItem('chemo_users') || '[]');
-            const tbody = document.getElementById('user-list-body');
-            const search = document.getElementById('user-search').value.toLowerCase();
-            
-            // Update Stats
-            document.getElementById('stat-total').textContent = users.length;
-            document.getElementById('stat-senior').textContent = users.filter(u => u.role === 'Senior Pharmacist').length;
-            document.getElementById('stat-general').textContent = users.filter(u => u.role === 'General Pharmacist').length;
-            
-            tbody.innerHTML = '';
-            
-            users.forEach((user, index) => {
-                if (search && !user.fullname.toLowerCase().includes(search) && !user.username.toLowerCase().includes(search)) return;
+        async function renderUserList() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/auth/users', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+                if (!response.ok) throw new Error("Failed to load users");
                 
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50/50 transition-colors group";
+                const result = await response.json();
+                const users = result.data;
+                window.backendUsers = users; // Store for edit reference
                 
-                const roleBadge = user.role === 'Senior Pharmacist' 
-                    ? '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-blue-200">Senior Admin</span>'
-                    : '<span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-gray-200">Pharmacist</span>';
+                const tbody = document.getElementById('user-list-body');
+                const search = document.getElementById('user-search').value.toLowerCase();
                 
-                tr.innerHTML = `
-                    <td class="p-4 text-center text-gray-400 font-mono text-xs">${index + 1}</td>
-                    <td class="p-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-black">
-                                ${user.fullname.substring(0, 2)}
+                // Update Stats
+                document.getElementById('stat-total').textContent = users.length;
+                document.getElementById('stat-senior').textContent = users.filter(u => u.role === 'Senior Pharmacist').length;
+                document.getElementById('stat-general').textContent = users.filter(u => u.role === 'General Pharmacist').length;
+                
+                tbody.innerHTML = '';
+                
+                users.forEach((user, index) => {
+                    if (search && !user.full_name.toLowerCase().includes(search) && !user.username.toLowerCase().includes(search)) return;
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-blue-50/50 transition-colors group";
+                    
+                    const roleBadge = user.role === 'Senior Pharmacist' 
+                        ? '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-blue-200">Senior Admin</span>'
+                        : '<span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-gray-200">Pharmacist</span>';
+                    
+                    tr.innerHTML = `
+                        <td class="p-4 text-center text-gray-400 font-mono text-xs">${index + 1}</td>
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-black">
+                                    ${user.full_name.substring(0, 2)}
+                                </div>
+                                <span class="font-bold text-gray-700">${user.full_name}</span>
                             </div>
-                            <span class="font-bold text-gray-700">${user.fullname}</span>
-                        </div>
-                    </td>
-                    <td class="p-4 text-gray-500 font-mono text-xs">${user.username}</td>
-                    <td class="p-4">${roleBadge}</td>
-                    <td class="p-4 text-center">
-                        <div class="flex justify-center gap-2">
-                            <button onclick="openEditModal(${index})" class="p-1.5 text-blue-400 hover:bg-blue-100 rounded transition-all" title="แก้ไข">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            ${user.username !== currentUser.username ? `
-                                <button onclick="deleteUser(${index})" class="p-1.5 text-red-400 hover:bg-red-100 rounded transition-all" title="ลบ">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </td>
+                        <td class="p-4 text-gray-500 font-mono text-xs">${user.username}</td>
+                        <td class="p-4">${roleBadge}</td>
+                        <td class="p-4 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="openEditModal(${user.id})" class="p-1.5 text-blue-400 hover:bg-blue-100 rounded transition-all" title="แก้ไข">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
                                 </button>
-                            ` : '<div class="w-8 h-8"></div>'}
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            lucide.createIcons({ root: tbody });
+                                ${user.username !== currentUser.username ? `
+                                    <button onclick="deleteUser(${user.id}, '${user.full_name}')" class="p-1.5 text-red-400 hover:bg-red-100 rounded transition-all" title="ลบ">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                ` : '<div class="w-8 h-8"></div>'}
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                lucide.createIcons({ root: tbody });
+            } catch(e) {
+                console.error(e);
+                showNotice('ไม่สามารถโหลดข้อมูลผู้ใช้งานได้', 'error');
+            }
         }
 
-        function openEditModal(index) {
-            const users = JSON.parse(localStorage.getItem('chemo_users') || '[]');
-            const user = users[index];
+        function openEditModal(userId) {
+            const user = window.backendUsers.find(u => u.id === userId);
+            if(!user) return;
             
-            document.getElementById('edit-user-index').value = index;
-            document.getElementById('edit-fullname').value = user.fullname;
+            document.getElementById('edit-user-index').value = user.id;
+            document.getElementById('edit-fullname').value = user.full_name;
             document.getElementById('edit-role').value = user.role;
             
             document.getElementById('editUserModal').classList.add('active');
@@ -387,41 +400,63 @@
             }
         }
 
-        function saveUserEdit() {
+        async function saveUserEdit() {
             const fullname = document.getElementById('edit-fullname').value.trim();
             if (!fullname) {
                 alert('กรุณากรอกชื่อ-นามสกุล');
                 return;
             }
             
-            const index = document.getElementById('edit-user-index').value;
-            const users = JSON.parse(localStorage.getItem('chemo_users') || '[]');
+            const userId = document.getElementById('edit-user-index').value;
+            const role = document.getElementById('edit-role').value;
             
-            users[index].fullname = fullname;
-            users[index].role = document.getElementById('edit-role').value;
-            
-            localStorage.setItem('chemo_users', JSON.stringify(users));
-            
-            // If editing self, update currentUser too
-            if (users[index].username === currentUser.username) {
-                localStorage.setItem('currentUser', JSON.stringify(users[index]));
-                location.reload(); // Refresh to apply changes to sidebar
-            } else {
-                closeModal('editUserModal');
-                renderUserList();
-                showNotice('อัปเดตข้อมูลผู้ใช้เรียบร้อยแล้ว');
+            try {
+                const res = await fetch(`http://127.0.0.1:8000/api/auth/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ full_name: fullname, role })
+                });
+                
+                if(!res.ok) throw new Error("Failed to update user");
+                const result = await res.json();
+                
+                // If editing self, update currentUser
+                const updatedUser = result.data;
+                if (updatedUser.username === currentUser.username) {
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        username: updatedUser.username,
+                        fullname: updatedUser.full_name,
+                        role: updatedUser.role
+                    }));
+                    location.reload(); 
+                } else {
+                    closeModal('editUserModal');
+                    await renderUserList();
+                    showNotice('อัปเดตข้อมูลผู้ใช้เรียบร้อยแล้ว');
+                }
+            } catch(e) {
+                showNotice('เกิดข้อผิดพลาดในการแก้ไข', 'error');
             }
         }
 
-        function deleteUser(index) {
-            const users = JSON.parse(localStorage.getItem('chemo_users') || '[]');
-            const user = users[index];
-            
-            if (confirm(`คุณแน่ใจหรือไม่ที่จะลบบัญชีผู้ใช้ของ ${user.fullname}?`)) {
-                users.splice(index, 1);
-                localStorage.setItem('chemo_users', JSON.stringify(users));
-                renderUserList();
-                showNotice('ลบบัญชีผู้ใช้เรียบร้อยแล้ว', 'error');
+        async function deleteUser(userId, fullname) {
+            if (confirm(`คุณแน่ใจหรือไม่ที่จะลบบัญชีผู้ใช้ของ ${fullname}?`)) {
+                try {
+                    const res = await fetch(`http://127.0.0.1:8000/api/auth/users/${userId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                        }
+                    });
+                    if(!res.ok) throw new Error("Failed");
+                    await renderUserList();
+                    showNotice('ลบบัญชีผู้ใช้เรียบร้อยแล้ว', 'error');
+                } catch(e) {
+                    showNotice('ไม่สามารถลบผู้ใช้ได้', 'error');
+                }
             }
         }
 
@@ -434,47 +469,36 @@
             document.getElementById('addUserModal').classList.add('active');
         }
 
-        function addNewUser() {
+        async function addNewUser() {
             const fullname = document.getElementById('add-fullname').value.trim();
             const username = document.getElementById('add-username').value.trim();
             const password = document.getElementById('add-password').value.trim();
             const role = document.getElementById('add-role').value;
             
-            if (!fullname) {
-                alert('กรุณากรอกชื่อ-นามสกุล');
-                return;
-            }
-            if (!username) {
-                alert('กรุณากรอก Username');
-                return;
-            }
-            if (!password) {
-                alert('กรุณากรอก Password');
-                return;
-            }
-            if (password.length < 6) {
-                alert('Password อย่างน้อย 6 ตัวอักษร');
-                return;
-            }
+            if (!fullname || !username || !password || password.length < 6) return;
             
-            const users = JSON.parse(localStorage.getItem('chemo_users') || '[]');
-            if (users.find(u => u.username === username)) {
-                alert('Username นี้มีอยู่ในระบบแล้ว');
-                return;
+            try {
+                const res = await fetch('http://127.0.0.1:8000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullname, username, password, role })
+                });
+                
+                const result = await res.json();
+                if(!res.ok) throw new Error(result.detail || "Failed to create user");
+                
+                closeModal('addUserModal');
+                await renderUserList();
+                showNotice('เพิ่มผู้ใช้งานใหม่สำเร็จ');
+                
+                // Clear inputs
+                document.getElementById('add-fullname').value = '';
+                document.getElementById('add-username').value = '';
+                document.getElementById('add-password').value = '';
+                validateAddUserForm();
+            } catch(e) {
+                alert(e.message);
             }
-            
-            users.push({ fullname, username, password, role });
-            localStorage.setItem('chemo_users', JSON.stringify(users));
-            
-            closeModal('addUserModal');
-            renderUserList();
-            showNotice('เพิ่มผู้ใช้งานใหม่สำเร็จ');
-            
-            // Clear inputs
-            document.getElementById('add-fullname').value = '';
-            document.getElementById('add-username').value = '';
-            document.getElementById('add-password').value = '';
-            validateAddUserForm();
         }
 
         window.onload = () => {

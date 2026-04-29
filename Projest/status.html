@@ -259,24 +259,43 @@
         };
 
 
-        function buildInventoryData() {
+        async function buildInventoryData() {
             // Read live residual stock (leftover ml) from dispense.html
             let residual = {};
             try { residual = JSON.parse(localStorage.getItem('chemo_residual_stock') || '{}'); } catch(e) {}
 
-            // Read drug master data from manage.html (chemo_drugs) for live curQty
             let manageDrugs = {};
-            try { manageDrugs = JSON.parse(localStorage.getItem('chemo_drugs') || '{}'); } catch(e) {}
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/drugs/', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    result.data.forEach(d => {
+                        manageDrugs[d.drug_code] = {
+                            curQty: d.stock_qty,
+                            minQty: d.reorder_level,
+                            name: d.trade_name,
+                            expDate: d.expiry_date,
+                            lotNo: d.lot_no,
+                            storage: d.unit === 'fridge' ? 'fridge' : 'room'
+                        };
+                    });
+                }
+            } catch(e) { console.error("Failed to load inventory from DB", e); }
 
-            return Object.entries(DRUG_CATALOG).map(([id, drug]) => {
+            return Object.entries(DRUG_CATALOG).map(([id, catalogDrug]) => {
                 const res = residual[id] || { volume: 0 };
                 const resVol = parseFloat(res.volume || 0);
 
-                // Use curQty directly from manage.html — dispense.html already deducts on dispense
-                // Fallback to BASE_VIALS if manage.html hasn't been opened yet
-                const remaining = (manageDrugs[id] && manageDrugs[id].curQty !== undefined)
-                    ? manageDrugs[id].curQty
-                    : (BASE_VIALS[id] || 0);
+                const dbDrug = manageDrugs[id] || {};
+                const remaining = dbDrug.curQty !== undefined ? dbDrug.curQty : (BASE_VIALS[id] || 0);
+                const minQty = dbDrug.minQty !== undefined ? dbDrug.minQty : 5;
+                const lotNo = dbDrug.lotNo || catalogDrug.lotNo;
+                const expDate = dbDrug.expDate || catalogDrug.expDate;
+                const storage = dbDrug.storage || catalogDrug.storage;
+                
+                const drug = { ...catalogDrug, name: dbDrug.name || catalogDrug.name, lotNo, expDate, storage };
 
 
 
@@ -336,10 +355,11 @@
             });
         }
 
-        function renderInventoryTable() {
+        async function renderInventoryTable() {
             const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Loading...</td></tr>';
+            const data = await buildInventoryData();
             tbody.innerHTML = '';
-            const data = buildInventoryData();
 
             // Update dashboard counts
             let countLow = 0, countOut = 0, countNearExp = 0, countExpired = 0;
@@ -438,8 +458,8 @@
             });
 
             // ── Real-time: same-tab polling every 5 seconds ───────────
-            setInterval(() => {
-                renderInventoryTable();
+            setInterval(async () => {
+                await renderInventoryTable();
                 updateLastSync();
             }, 5000);
         };

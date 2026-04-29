@@ -126,34 +126,55 @@
             document.getElementById('register-section').classList.toggle('hidden');
         }
 
-        // Mock User Data in LocalStorage
-        if (!localStorage.getItem('chemo_users')) {
-            localStorage.setItem('chemo_users', JSON.stringify([
-                { fullname: 'ภก. สมชาย ใจดี', username: 'admin', password: '123', role: 'Senior Pharmacist' }
-            ]));
-        }
-
         // Login Handler
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const user = document.getElementById('login-username').value;
-            const pass = document.getElementById('login-password').value;
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
             
-            const users = JSON.parse(localStorage.getItem('chemo_users'));
-            const foundUser = users.find(u => u.username === user && u.password === pass);
-
-            if (foundUser) {
-                localStorage.setItem('currentUser', JSON.stringify(foundUser));
-                window.location.href = 'index.html';
-            } else {
-                alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.status === 'success') {
+                    // Save tokens
+                    localStorage.setItem('access_token', result.data.access_token);
+                    if (result.data.refresh_token) {
+                        localStorage.setItem('refresh_token', result.data.refresh_token);
+                    }
+                    
+                    // Fetch user details
+                    const meResponse = await fetch('http://127.0.0.1:8000/api/auth/me', {
+                        headers: { 'Authorization': `Bearer ${result.data.access_token}` }
+                    });
+                    const meResult = await meResponse.json();
+                    
+                    if (meResponse.ok && meResult.status === 'success') {
+                        const userData = meResult.data;
+                        userData.fullname = userData.full_name; // map for legacy frontend
+                        localStorage.setItem('currentUser', JSON.stringify(userData));
+                        window.location.href = 'index.html';
+                    } else {
+                        alert('ไม่สามารถดึงข้อมูลผู้ใช้ได้');
+                    }
+                } else {
+                    alert(result.message || result.detail || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
             }
         });
 
         // Register Handler
-        document.getElementById('register-form').addEventListener('submit', (e) => {
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const fullname = document.getElementById('reg-fullname').value;
+            const full_name = document.getElementById('reg-fullname').value;
             const username = document.getElementById('reg-username').value;
             const password = document.getElementById('reg-password').value;
             const confirm = document.getElementById('reg-confirm').value;
@@ -164,17 +185,26 @@
                 return;
             }
 
-            const users = JSON.parse(localStorage.getItem('chemo_users'));
-            if (users.find(u => u.username === username)) {
-                alert('ชื่อผู้ใช้งานนี้มีอยู่ในระบบแล้ว');
-                return;
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, full_name, role })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.status === 'success') {
+                    alert('ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบ');
+                    toggleForms();
+                    document.getElementById('register-form').reset();
+                } else {
+                    alert(result.message || result.detail || 'เกิดข้อผิดพลาดในการลงทะเบียน');
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
             }
-
-            users.push({ fullname, username, password, role });
-            localStorage.setItem('chemo_users', JSON.stringify(users));
-            
-            alert('ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบ');
-            toggleForms();
         });
     </script>
 </body>

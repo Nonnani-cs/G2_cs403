@@ -243,8 +243,18 @@
     </main>
 
     <script>
-        function logout() {
+        async function logout() {
+            try {
+                await fetch('http://127.0.0.1:8000/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+            } catch (e) {
+                console.error(e);
+            }
             localStorage.removeItem('currentUser');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
             window.location.href = 'login.html';
         }
 

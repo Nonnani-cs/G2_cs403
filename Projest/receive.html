@@ -607,12 +607,28 @@
             { id: 'PD-00016', name: 'Irinotecan 100mg', storage: 'อุณหภูมิห้อง', stock: 60, unit: 'ขวด' }
         ];
 
-        function seedMasterMedicationData() {
-            DEFAULT_CANCER_DRUGS.forEach(drug => {
-                if (!masterData.find(item => item.id === drug.id)) {
-                    masterData.push({ ...drug });
+        async function seedMasterMedicationData() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/drugs/', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+                const result = await response.json();
+                if (response.ok && result.status === 'success') {
+                    masterData.length = 0;
+                    result.data.forEach(d => {
+                        masterData.push({
+                            db_id: d.id,
+                            id: d.drug_code,
+                            name: d.trade_name,
+                            storage: 'อุณหภูมิห้อง',
+                            stock: d.stock_qty,
+                            unit: d.unit
+                        });
+                    });
                 }
-            });
+            } catch (e) {
+                console.error('API Error:', e);
+            }
         }
 
         let barcodeString = "";
@@ -976,12 +992,33 @@
             }
         }
 
-        function saveAndFinish() {
+        async function saveAndFinish() {
             if (checkoutList.length === 0) {
                 showNotice('ไม่มีรายการยาในตาราง กรุณาเพิ่มรายการก่อนบันทึก', 'warning');
                 return;
             }
-            showNotice('บันทึกและเสร็จสิ้นเรียบร้อย', 'success');
+            
+            try {
+                for (const item of checkoutList) {
+                    await fetch('http://127.0.0.1:8000/api/inventory/receive', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                        },
+                        body: JSON.stringify({ drug_id: item.db_id, qty: Number(item.qty) })
+                    });
+                }
+                
+                showNotice('บันทึกและเสร็จสิ้นเรียบร้อย', 'success');
+                checkoutList = [];
+                renderCheckoutTable();
+                updateSaveButtonState();
+                await seedMasterMedicationData(); // Refresh stock
+                initMasterTable();
+            } catch (e) {
+                showNotice('เกิดข้อผิดพลาดในการบันทึก', 'warning');
+            }
         }
 
         function closeNotice() {
@@ -1002,7 +1039,8 @@
             if(select.options.length <= 1) {
                 masterData.forEach(item => {
                     const opt = document.createElement('option');
-                    opt.value = item.id;
+                    opt.value = item.db_id; // Using db_id for API
+                    opt.dataset.code = item.id;
                     opt.innerText = item.name;
                     select.appendChild(opt);
                 });
@@ -1018,12 +1056,14 @@
         }
 
         function updateSRCode() {
-            const id = document.getElementById('sr-drug-name').value;
-            document.getElementById('sr-pd-id').value = id;
+            const select = document.getElementById('sr-drug-name');
+            const selectedOpt = select.options[select.selectedIndex];
+            document.getElementById('sr-pd-id').value = selectedOpt.dataset.code || '';
         }
 
-        function saveStockInbound() {
+        async function saveStockInbound() {
             const nameSelect = document.getElementById('sr-drug-name');
+            const drugId = nameSelect.value;
             const name = nameSelect.options[nameSelect.selectedIndex].text;
             const batch = document.getElementById('sr-batch').value.trim();
             const expiry = document.getElementById('sr-expiry').value;
@@ -1031,7 +1071,7 @@
             const conc = Number(document.getElementById('sr-conc').value);
             const vol = Number(document.getElementById('sr-vol').value);
 
-            if (!nameSelect.value || !batch || !expiry) {
+            if (!drugId || !batch || !expiry) {
                 showNotice("กรุณากรอกข้อมูลให้ครบทุกช่อง", "warning");
                 return;
             }
@@ -1041,40 +1081,49 @@
                 return;
             }
 
-            if (!Number.isFinite(conc) || conc <= 0) {
-                showNotice("กรุณากรอกความเข้มข้น (mg/ml) ให้มากกว่า 0", "warning");
-                return;
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/inventory/receive', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ drug_id: parseInt(drugId), qty: qty })
+                });
+
+                if (response.ok) {
+                    const newItem = {
+                        date: new Date().toISOString().split('T')[0],
+                        inv: "INV-" + Math.floor(Math.random()*90000 + 10000),
+                        name: name,
+                        qty: qty,
+                        status: "สำเร็จ",
+                        batch: batch,
+                        expiry: expiry,
+                        conc: conc + " mg/ml",
+                        vol: vol + " ml"
+                    };
+
+                    srHistory.unshift(newItem);
+                    renderSRHistory();
+                    showNotice("บันทึกรับยาเข้าสต็อกเรียบร้อยแล้ว");
+                    
+                    document.getElementById('sr-batch').value = "";
+                    document.getElementById('sr-expiry').value = "";
+                    document.getElementById('sr-qty').value = "";
+                    document.getElementById('sr-conc').value = "";
+                    document.getElementById('sr-vol').value = "";
+                    nameSelect.value = "";
+                    document.getElementById('sr-pd-id').value = "";
+                    
+                    await seedMasterMedicationData();
+                    initMasterTable();
+                } else {
+                    showNotice("ไม่สามารถบันทึกได้", "warning");
+                }
+            } catch (e) {
+                showNotice("เกิดข้อผิดพลาดในการเชื่อมต่อ API", "warning");
             }
-
-            if (!Number.isFinite(vol) || vol <= 0) {
-                showNotice("กรุณากรอกปริมาตรขวด (ml) ให้มากกว่า 0", "warning");
-                return;
-            }
-
-            const newItem = {
-                date: new Date().toISOString().split('T')[0],
-                inv: "INV-" + Math.floor(Math.random()*90000 + 10000),
-                name: name,
-                qty: qty,
-                status: "สำเร็จ",
-                batch: batch,
-                expiry: expiry,
-                conc: conc + " mg/ml",
-                vol: vol + " ml"
-            };
-
-            srHistory.unshift(newItem);
-            renderSRHistory();
-            showNotice("บันทึกรับยาเข้าสต็อกเรียบร้อยแล้ว");
-            
-            // Clear form
-            document.getElementById('sr-batch').value = "";
-            document.getElementById('sr-expiry').value = "";
-            document.getElementById('sr-qty').value = "";
-            document.getElementById('sr-conc').value = "";
-            document.getElementById('sr-vol').value = "";
-            nameSelect.value = "";
-            document.getElementById('sr-pd-id').value = "";
         }
 
         function renderSRHistory() {
@@ -1199,9 +1248,9 @@
             window.location.href = 'login.html';
         }
 
-        window.onload = () => {
+        window.onload = async () => {
             lucide.createIcons();
-            seedMasterMedicationData();
+            await seedMasterMedicationData();
             initMasterTable();
             
             if (currentUser) {

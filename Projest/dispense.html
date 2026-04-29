@@ -1240,7 +1240,7 @@
                 initPrescriptionSidebar();
             }
 
-            function saveCurrentPrescription() {
+            async function saveCurrentPrescription() {
                 const now = Date.now();
                 if (now - lastSaveClickAt < 1000) {
                     showNotice('กำลังบันทึกอยู่ กรุณารอสักครู่', 'info');
@@ -1281,6 +1281,32 @@
                 document.getElementById('order-status').innerText = "บันทึกแล้ว";
                 document.getElementById('order-status').className = "bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-black uppercase";
                 savePrescriptionsToStorage();
+
+                // Sync to Backend
+                try {
+                    const syncPayload = {
+                        order_no: orderId,
+                        hn: data.hn || "UNKNOWN",
+                        patient: data.patient,
+                        doctor: data.doctor || "-",
+                        status: data.status,
+                        items: data.items.map(i => ({
+                            code: i.id,
+                            qty: Number(i.doseMg || i.qty || 1),
+                            name: i.name
+                        }))
+                    };
+                    await fetch('http://127.0.0.1:8000/api/prescriptions/sync', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                        },
+                        body: JSON.stringify(syncPayload)
+                    });
+                } catch (e) {
+                    console.error("Backend sync failed:", e);
+                }
 
                 initPrescriptionSidebar();
                 showAntigravityNotice('บันทึกใบสั่งยาเรียบร้อย • ' + orderId);

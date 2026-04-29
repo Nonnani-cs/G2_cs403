@@ -945,25 +945,35 @@
             localStorage.setItem('chemo_drugs', JSON.stringify(masterData));
         }
 
-        function loadDrugsFromStorage() {
-            const raw = localStorage.getItem('chemo_drugs');
-            if (!raw) {
-                // First run — bootstrap defaults into localStorage so dispense/status can read them
-                saveDrugsToStorage();
-                return;
-            }
+        async function loadDrugsFromStorage() {
             try {
-                const saved = JSON.parse(raw);
-                if (saved && typeof saved === 'object') {
-                    Object.entries(saved).forEach(([code, data]) => {
-                        masterData[code] = { ...masterData[code], ...data };
-                    });
-                    // Ensure any NEW default drugs not in saved data are persisted too
-                    Object.keys(masterData).forEach(code => {
-                        if (!saved[code]) saveDrugsToStorage();
+                const response = await fetch('http://127.0.0.1:8000/api/drugs/', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+                const result = await response.json();
+                if (response.ok && result.status === 'success') {
+                    Object.keys(masterData).forEach(k => delete masterData[k]);
+                    result.data.forEach(d => {
+                        masterData[d.drug_code] = {
+                            id: d.id,
+                            name: d.trade_name,
+                            genericCode: d.drug_code,
+                            genericName: d.generic_name,
+                            barcode: d.drug_code,
+                            unit: d.unit,
+                            curQty: d.stock_qty,
+                            minQty: d.reorder_level,
+                            maxQty: d.reorder_level * 2,
+                            usage: 'ตามแพทย์สั่ง',
+                            note: d.lot_no || '-',
+                            storage: 'room',
+                            routes: ['iv']
+                        };
                     });
                 }
-            } catch (e) { saveDrugsToStorage(); }
+            } catch (e) {
+                console.error('API load error, falling back to local masterData structure');
+            }
         }
 
         function updateCurrentDrugQtyDisplay() {
@@ -1250,34 +1260,47 @@
             }
         }
 
-        function handleModalSave() {
+        async function handleModalSave() {
             const genericName = document.getElementById('generic-name-input').value.trim();
             const productCode = document.getElementById('product-code-input').value.trim();
             const tradeName = document.getElementById('trade-name-input').value.trim();
             const totalQty = document.getElementById('total-qty-input').value.trim();
 
-            if (!genericName) {
-                showNotice('กรุณากรอกชื่อสามัญยา (Generic Name)', 'warning');
-                return;
-            }
-            if (!productCode) {
-                showNotice('กรุณากรอกรหัสสินค้า (Product Code)', 'warning');
-                return;
-            }
-            if (!tradeName) {
-                showNotice('กรุณากรอกชื่อทางการค้า (Trade Name)', 'warning');
-                return;
-            }
-            if (!totalQty || totalQty <= 0) {
-                showNotice('กรุณากรอกจำนวนยา และต้องมากกว่า 0', 'warning');
+            if (!genericName || !productCode || !tradeName || !totalQty || totalQty <= 0) {
+                showNotice('กรุณากรอกข้อมูลให้ครบถ้วนและจำนวนต้องมากกว่า 0', 'warning');
                 return;
             }
 
-            showNotice('บันทึกข้อมูลยาเรียบร้อยแล้ว');
-            closeModal();
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/drugs/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({
+                        drug_code: productCode,
+                        trade_name: tradeName,
+                        generic_name: genericName,
+                        stock_qty: Number(totalQty)
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok && result.status === 'success') {
+                    await loadDrugsFromStorage(); // re-fetch
+                    renderDrugListTable();
+                    showNotice('บันทึกข้อมูลยาเรียบร้อยแล้ว');
+                    closeModal();
+                } else {
+                    showNotice(result.message || 'รหัสสินค้านี้อาจมีอยู่แล้ว', 'warning');
+                }
+            } catch (error) {
+                showNotice('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'warning');
+            }
         }
 
-        function handleMainSave() {
+        async function handleMainSave() {
             const detailCode = document.getElementById('detail-code')?.value.trim();
             const detailName = document.getElementById('detail-name')?.value.trim();
             const currentQty = document.getElementById('detail-current-qty')?.value.trim();
@@ -1292,31 +1315,62 @@
                 return;
             }
 
-            // ← Persist updated curQty to masterData and localStorage
-            if (masterData[detailCode]) {
-                masterData[detailCode].curQty = Number(currentQty);
-                masterData[detailCode].name = detailName;
+            try {
+                const drugId = masterData[detailCode]?.id;
+                if (!drugId) return showNotice('ไม่พบ ID ยาในระบบ', 'warning');
+
+                const response = await fetch(`http://127.0.0.1:8000/api/drugs/${drugId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ trade_name: detailName, stock_qty: Number(currentQty) })
+                });
+
+                const result = await response.json();
+                if (response.ok && result.status === 'success') {
+                    if (masterData[detailCode]) {
+                        masterData[detailCode].curQty = Number(currentQty);
+                        masterData[detailCode].name = detailName;
+                    }
+                    renderDrugListTable(); 
+                    showNotice('บันทึกข้อมูลเรียบร้อย');
+                } else {
+                    showNotice(result.message || 'ไม่สามารถบันทึกข้อมูลได้ หรือคุณไม่มีสิทธิ์', 'warning');
+                }
+            } catch (error) {
+                showNotice('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'warning');
             }
-            saveDrugsToStorage();
-            renderDrugListTable(); // Refresh sidebar count
-            showNotice('บันทึกข้อมูลเรียบร้อย');
         }
 
         function handleDeleteDrug() {
-            showConfirm('คุณยืนยันที่จะลบข้อมูลยานี้ใช่หรือไม่? (การดำเนินการนี้ไม่สามารถย้อนกลับได้)', () => {
+            showConfirm('คุณยืนยันที่จะลบข้อมูลยานี้ใช่หรือไม่? (การดำเนินการนี้ไม่สามารถย้อนกลับได้)', async () => {
                 if (currentDrugCode && masterData[currentDrugCode]) {
-                    delete masterData[currentDrugCode];
-                    delete lotData[currentDrugCode];
-                    saveDrugsToStorage();
-                    currentDrugCode = null;
-                    renderDrugListTable();
-                    // Clear detail panel
-                    ['detail-code', 'detail-name', 'detail-current-qty', 'detail-barcode'].forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.value = '';
-                    });
+                    try {
+                        const drugId = masterData[currentDrugCode].id;
+                        const response = await fetch(`http://127.0.0.1:8000/api/drugs/${drugId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                        });
+                        
+                        if (response.ok) {
+                            delete masterData[currentDrugCode];
+                            delete lotData[currentDrugCode];
+                            currentDrugCode = null;
+                            renderDrugListTable();
+                            ['detail-code', 'detail-name', 'detail-current-qty', 'detail-barcode'].forEach(id => {
+                                const el = document.getElementById(id);
+                                if (el) el.value = '';
+                            });
+                            showNotice('ลบข้อมูลเรียบร้อยแล้ว', 'success');
+                        } else {
+                            showNotice('ไม่สามารถลบข้อมูลได้ หรือคุณไม่มีสิทธิ์ Admin', 'warning');
+                        }
+                    } catch (e) {
+                        showNotice('เชื่อมต่อ API ผิดพลาด', 'warning');
+                    }
                 }
-                showNotice('ลบข้อมูลเรียบร้อยแล้ว', 'success');
             });
         }
 
@@ -1406,9 +1460,9 @@
             window.location.href = 'login.html';
         }
 
-        window.onload = () => {
+        window.onload = async () => {
             initializeMasterDrugData();
-            loadDrugsFromStorage(); // ← Apply any saved overrides
+            await loadDrugsFromStorage(); // ← Apply any saved overrides
             renderDrugListTable();
             lucide.createIcons();
             const firstCode = Object.keys(masterData).sort()[0];

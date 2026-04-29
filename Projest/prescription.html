@@ -677,12 +677,71 @@
                 return;
             }
 
-            showConfirm('คุณต้องการบันทึกการจ่ายยาใช่หรือไม่? (ตรวจสอบรายการยาถูกต้องตรงตามใบสั่งแพทย์)', () => {
-                showNotice('บันทึกการจ่ายยาเรียบร้อยแล้ว');
+            showConfirm('คุณต้องการบันทึกการจ่ายยาใช่หรือไม่? (ตรวจสอบรายการยาถูกต้องตรงตามใบสั่งแพทย์)', async () => {
                 disableSaveButton(); // Prevent double click
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
+                
+                try {
+                    // Update prescription status in backend
+                    // We need the integer ID, but since we only have orderNo, let's sync it
+                    const syncPayload = {
+                        order_no: currentOrderId,
+                        hn: currentHN,
+                        patient: document.getElementById('name-input').value,
+                        doctor: "-",
+                        status: "จ่ายแล้ว",
+                        items: sampleItems.map(i => ({
+                            code: i.code,
+                            qty: Number(i.qty || 1),
+                            name: i.name
+                        }))
+                    };
+                    
+                    const syncResponse = await fetch('http://127.0.0.1:8000/api/prescriptions/sync', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                        },
+                        body: JSON.stringify(syncPayload)
+                    });
+                    
+                    const syncResult = await syncResponse.json();
+                    if (!syncResponse.ok || syncResult.status !== 'success') {
+                        throw new Error('Sync failed');
+                    }
+                    
+                    const prescriptionId = syncResult.data.id;
+
+                    // Deduct stock for each item via backend
+                    const dispenseResponse = await fetch('http://127.0.0.1:8000/api/inventory/dispense', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                        },
+                        body: JSON.stringify({ prescription_id: prescriptionId })
+                    });
+                    
+                    if (!dispenseResponse.ok) {
+                         const err = await dispenseResponse.json();
+                         throw new Error(err.detail || 'Dispense failed');
+                    }
+
+                    showNotice('บันทึกการจ่ายยาและตัดสต็อกเรียบร้อยแล้ว');
+                    
+                    // Also update local storage so UI doesn't break
+                    if (prescriptions && prescriptions[currentOrderId]) {
+                        prescriptions[currentOrderId].status = "จ่ายแล้ว";
+                        localStorage.setItem('chemo_prescriptions', JSON.stringify(prescriptions));
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+
+                } catch(e) {
+                    showNotice('เกิดข้อผิดพลาดในการบันทึกการจ่ายยา', 'error');
+                }
             });
         }
 

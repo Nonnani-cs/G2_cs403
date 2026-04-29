@@ -574,7 +574,7 @@
             window.location.href = 'login.html';
         }
 
-        function fetchReportData(tabType = 'stock') {
+        async function fetchReportData(tabType = 'stock') {
             const daySelector = `report-day-${tabType}`;
             const monthSelector = `report-month-${tabType}`;
             const yearSelector = `report-year-${tabType}`;
@@ -588,8 +588,103 @@
             document.getElementById('print-date').textContent = `ข้อมูลประจำวันที่: ${dateStr}`;
             document.getElementById('print-timestamp').textContent = new Date().toLocaleString('th-TH');
 
+            try {
+                if (tabType === 'stock') {
+                    const res = await fetch('http://127.0.0.1:8000/api/drugs/', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                    });
+                    const result = await res.json();
+                    renderStockTable(result.data || []);
+                } else {
+                    const res = await fetch('http://127.0.0.1:8000/api/inventory/transactions', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                    });
+                    const result = await res.json();
+                    if (tabType === 'receive') {
+                        renderReceiveTable((result.data || []).filter(t => t.action === 'receive'));
+                    } else if (tabType === 'dispense') {
+                        renderDispenseTable((result.data || []).filter(t => t.action === 'dispense'));
+                    }
+                }
+            } catch(e) {
+                console.error(e);
+            }
             lucide.createIcons();
-            alert(`ดึงข้อมูลรายงาน${['receive', 'dispense', 'stock'].includes(tabType) ? ['การรับยาเข้า', 'การจ่ายยาออก', 'สรุปสต็อกยา'][['receive', 'dispense', 'stock'].indexOf(tabType)] : ''}ล่าสุดเรียบร้อยแล้ว`);
+        }
+
+        function renderStockTable(drugs) {
+            const tbody = document.getElementById('report-table-body');
+            tbody.innerHTML = '';
+            let totalVials = 0;
+            drugs.forEach((d, index) => {
+                totalVials += d.stock_qty;
+                const statusHtml = d.stock_qty <= d.reorder_level ? 
+                    `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-orange-100 text-orange-800"><span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5"></span> ใกล้หมด</span>` : 
+                    `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span> ปกติ (Normal)</span>`;
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-blue-50/50 transition-colors">
+                        <td class="p-4 text-center text-gray-400 font-mono text-xs border-r">${index + 1}</td>
+                        <td class="p-4 font-bold text-gray-800">${d.generic_name}</td>
+                        <td class="p-4 text-sm text-gray-500 font-medium">${d.trade_name}</td>
+                        <td class="p-4 font-mono text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">${d.lot_no}</td>
+                        <td class="p-4 text-right font-bold text-gray-700">${d.stock_qty}</td>
+                        <td class="p-4 text-right font-black text-blue-600">0.00</td>
+                        <td class="p-4 text-center text-[11px] font-bold text-gray-600">${new Date(d.expiry_date).toLocaleDateString('th-TH')}</td>
+                        <td class="p-4 text-center">${statusHtml}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('display-count').textContent = drugs.length;
+            const summaryEls = document.querySelectorAll('#tab-content-stock .text-xl.font-black');
+            if(summaryEls.length >= 1) summaryEls[0].innerHTML = `${totalVials} <span class="text-xs font-bold text-gray-400 ml-1 uppercase">ขวด</span>`;
+        }
+
+        function renderReceiveTable(txs) {
+            const tbody = document.getElementById('receive-table-body');
+            tbody.innerHTML = '';
+            let totalQty = 0;
+            txs.forEach((t, index) => {
+                totalQty += t.qty;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-blue-50/50 transition-colors">
+                        <td class="p-4 text-center text-gray-400 font-mono text-xs border-r">${index + 1}</td>
+                        <td class="p-4 font-bold text-gray-800">${t.drug_name}</td>
+                        <td class="p-4 text-sm text-gray-500 font-medium">${t.trade_name}</td>
+                        <td class="p-4 font-mono text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">${t.lot_no}</td>
+                        <td class="p-4 text-right font-bold text-gray-700">${t.qty}</td>
+                        <td class="p-4 text-right font-black text-blue-600">0.00</td>
+                        <td class="p-4 text-center text-[11px] font-bold text-gray-600">${new Date(t.created_at).toLocaleDateString('th-TH')}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('receive-count').textContent = txs.length;
+            const summaryEls = document.querySelectorAll('#tab-content-receive .text-xl.font-black');
+            if(summaryEls.length >= 1) summaryEls[0].innerHTML = `${totalQty} <span class="text-xs font-bold text-gray-400 ml-1 uppercase">ขวด</span>`;
+        }
+
+        function renderDispenseTable(txs) {
+            const tbody = document.getElementById('dispense-table-body');
+            tbody.innerHTML = '';
+            let totalQty = 0;
+            txs.forEach((t, index) => {
+                totalQty += t.qty;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-blue-50/50 transition-colors">
+                        <td class="p-4 text-center text-gray-400 font-mono text-xs border-r">${index + 1}</td>
+                        <td class="p-4 font-bold text-gray-800">${t.drug_name}</td>
+                        <td class="p-4 text-sm text-gray-500 font-medium">${t.trade_name}</td>
+                        <td class="p-4 font-mono text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">${t.lot_no}</td>
+                        <td class="p-4 text-right font-bold text-gray-700">${t.qty}</td>
+                        <td class="p-4 text-right font-black text-blue-600">0.00</td>
+                        <td class="p-4 text-center text-[11px] font-bold text-gray-600">${new Date(t.created_at).toLocaleDateString('th-TH')}</td>
+                        <td class="p-4 text-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 uppercase">จ่ายผู้ป่วย</span></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('dispense-count').textContent = txs.length;
+            const summaryEls = document.querySelectorAll('#tab-content-dispense .text-xl.font-black');
+            if(summaryEls.length >= 1) summaryEls[0].innerHTML = `${totalQty} <span class="text-xs font-bold text-gray-400 ml-1 uppercase">ขวด</span>`;
         }
 
         window.onload = () => {
@@ -652,7 +747,7 @@
             document.getElementById('print-date').textContent = `ข้อมูลประจำวันที่: ${dateStr}`;
             document.getElementById('print-timestamp').textContent = today.toLocaleString('th-TH');
 
-            lucide.createIcons();
+            fetchReportData('stock');
         };
     </script>
 </body>
